@@ -1,2 +1,4 @@
 venv
 configlocal.cfg
+/logs
+cleaner/__pycache__
