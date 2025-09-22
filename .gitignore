@@ -1,4 +1,5 @@
-venv
+/venv
 configlocal.cfg
 /logs
-cleaner/__pycache__
+cleaner/__pycache__/
+/data

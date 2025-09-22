@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from cleaner.logger import init_logging
-from cleaner.config import SERVER_HOST, SERVER_PORT, DRY_RUN, ONLY_UPGRADES
+from cleaner.config import SERVER_HOST, SERVER_PORT, DRY_RUN
 from cleaner.routes import bp as cleaner_bp
 from flask import Flask
 
@@ -18,5 +18,5 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    log.info(f"Start webhook-cleaner on {SERVER_HOST}:{SERVER_PORT} (DRY_RUN={DRY_RUN}, ONLY_UPGRADES={ONLY_UPGRADES})")
+    log.info(f"Start webhook-cleaner on {SERVER_HOST}:{SERVER_PORT} (DRY_RUN={DRY_RUN})")
     app.run(host=SERVER_HOST, port=SERVER_PORT)
