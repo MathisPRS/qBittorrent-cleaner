@@ -1,10 +1,6 @@
 import os, json, time, threading
 from typing import Any, Optional
-
-# ---- paramètres (surclassables via ENV dans docker-compose) ----
-CACHE_FILE = os.environ.get("CLEANER_CACHE_FILE", "/app/data/cache.json")
-CACHE_TTL  = int(os.environ.get("CLEANER_CACHE_TTL", "900"))      # 0 = jamais d'expiration
-CACHE_MAX_ITEMS = int(os.environ.get("CLEANER_CACHE_MAX_ITEMS", "1000"))
+from .config import CACHE_FILE, CACHE_TTL, CACHE_MAX_ITEMS
 
 _lock = threading.RLock()
 _mem: dict[str, dict[str, Any]] = {}   # key -> {"latest": str|None, "candidates": [str], "ts": float}
@@ -54,7 +50,8 @@ def get(key: str) -> Optional[dict]:
             return None
         return ent
 
-def set(key: str, latest: Optional[str], candidates: list[str]):
+def put(key: str, latest: Optional[str], candidates: list[str]):
+    """Écrit/écrase l’entrée de cache (remplace l’ancien 'set')."""
     with _lock:
         # contrôle taille cache
         if len(_mem) >= CACHE_MAX_ITEMS:
@@ -104,7 +101,7 @@ def prune_candidates(key: str, removed_hashes: list[str]):
         ent = _mem.get(key)
         if not ent:
             return
-        s = set(removed_hashes)
+        s = set(removed_hashes)  # <-- builtin 'set' maintenant OK (plus de conflit)
         ent["candidates"] = [h for h in ent.get("candidates", []) if h not in s]
         if ent.get("latest") in s:
             ent["latest"] = None

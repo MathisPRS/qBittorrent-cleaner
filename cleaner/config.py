@@ -44,6 +44,12 @@ GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN")
 GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY"))
 GOTIFY_TITLE   = cfg.get("gotify", "TITLE")
 
+#CACHE
+CACHE_FILE = cfg.get("cache", "CACHE_FILE")
+CACHE_TTL  = int(cfg.get("cache", "CACHE_TTL"))      # 0 = jamais d'expiration
+CACHE_MAX_ITEMS = int(cfg.get("cache", "CACHE_MAX_ITEMS"))
+
+
 # HTTP tunables
 REQ_TIMEOUT      = 12
 MAX_RETRIES      = 3

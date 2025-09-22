@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import Tuple, List
 from .http import json_get
 from .config import SONARR_URL, SONARR_KEY, HIST_PAGE_SIZE, HIST_MAX_PAGES
-from .cache import get as cache_get, set as cache_set, touch_current
+from .cache import get as cache_get, put as cache_put, touch_current
 
 log = logging.getLogger("webhook-cleaner")
 
-MAX_PAGES_SCAN = max(5, HIST_MAX_PAGES)       # profondeur de scan (descendante)
-MAX_DISTINCT_HASHES = 10                      # early-stop si on a assez de doublons
+MAX_PAGES_SCAN = max(5, HIST_MAX_PAGES)
+MAX_DISTINCT_HASHES = 10
 
 def sonarr_get(path, params=None):
     hdr = {"X-Api-Key": SONARR_KEY} if SONARR_KEY else {}
@@ -22,14 +22,12 @@ def _parse_date(iso: str) -> datetime:
 
 def _is_relevant_event(ev: str) -> bool:
     ev = (ev or "").lower()
-    # On inclut TOUJOURS les grabs + imports/upgrades
     return ev in ("grabbed","grab","download","downloadimported","episodefileimported","upgrade","downloadfolderimported")
 
 def _cache_key(series_id: int, episode_ids: List[int]) -> str:
     return f"sonarr:{series_id}:{','.join(str(x) for x in sorted(episode_ids))}"
 
 def _scan_history(series_id: int, episode_ids: set[int]) -> Tuple[list[str], str | None]:
-    """Scanne l'historique (tri desc). Retourne (candidats, latest). Early-stop si suffisant."""
     candidates: dict[str, datetime] = {}
     page = 1
     while page <= MAX_PAGES_SCAN:
@@ -41,7 +39,6 @@ def _scan_history(series_id: int, episode_ids: set[int]) -> Tuple[list[str], str
         recs = payload.get("records", payload) or []
         if not recs:
             break
-
         for it in recs:
             if it.get("seriesId") != series_id:
                 continue
@@ -57,10 +54,8 @@ def _scan_history(series_id: int, episode_ids: set[int]) -> Tuple[list[str], str
             dt = _parse_date(it.get("date"))
             if (dl not in candidates) or (dt > candidates[dl]):
                 candidates[dl] = dt
-
         if len(candidates) >= MAX_DISTINCT_HASHES:
             break
-
         total = payload.get("totalRecords")
         if total is not None and page * HIST_PAGE_SIZE >= total:
             break
@@ -72,10 +67,6 @@ def _scan_history(series_id: int, episode_ids: set[int]) -> Tuple[list[str], str
     return list(candidates.keys()), latest
 
 def old_hashes_via_grabs(series_id: int, episode_ids: List[int], current_hash: str) -> list[str]:
-    """
-    Dédup agressive: récupère (cache sinon scan) tous les hashes (grabbed + imports),
-    marque le 'current_hash' comme latest si présent, et renvoie tous les autres à supprimer.
-    """
     key = _cache_key(series_id, episode_ids)
     cur = (current_hash or "").lower().strip()
 
@@ -83,7 +74,7 @@ def old_hashes_via_grabs(series_id: int, episode_ids: List[int], current_hash: s
     if entry:
         if cur:
             touch_current(key, cur)
-            entry = cache_get(key)  # relis après touch
+            entry = cache_get(key)
         candidates = entry.get("candidates", []) or []
         latest = entry.get("latest")
         log.debug(f"[CACHE HIT] {key} → latest={latest}, candidates={candidates}")
@@ -92,7 +83,7 @@ def old_hashes_via_grabs(series_id: int, episode_ids: List[int], current_hash: s
         if cur and cur not in candidates:
             candidates.append(cur)
             latest = cur
-        cache_set(key, latest, candidates)
+        cache_put(key, latest, candidates)   # <-- put()
         log.debug(f"[CACHE MISS] {key} → latest={latest}, candidates={candidates}")
 
     keep = set(x for x in (latest, cur) if x)
@@ -111,6 +102,5 @@ def media_label_from_payload(payload: dict) -> str:
 def is_upgrade_event(payload: dict) -> bool:
     return str(payload.get("isUpgrade", "")).lower() in ("true","1","yes")
 
-# expose la clé si tu veux la passer à _purge_torrents pour prune
 def cache_key(series_id: int, episode_ids: List[int]) -> str:
     return _cache_key(series_id, episode_ids)

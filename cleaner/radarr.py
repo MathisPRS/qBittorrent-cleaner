@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Tuple
 from .http import json_get
 from .config import RADARR_URL, RADARR_KEY, HIST_PAGE_SIZE, HIST_MAX_PAGES
-from .cache import get as cache_get, set as cache_set, touch_current
+from .cache import get as cache_get, put as cache_put, touch_current
 
 log = logging.getLogger("webhook-cleaner")
 
@@ -49,10 +49,8 @@ def _scan_history(movie_id: int) -> Tuple[list[str], str | None]:
             dt = _parse_date(it.get("date"))
             if (dl not in candidates) or (dt > candidates[dl]):
                 candidates[dl] = dt
-
         if len(candidates) >= MAX_DISTINCT_HASHES:
             break
-
         total = payload.get("totalRecords")
         if total is not None and page * HIST_PAGE_SIZE >= total:
             break
@@ -80,7 +78,7 @@ def old_hashes_via_grabs(movie_id: int, current_hash: str) -> list[str]:
         if cur and cur not in candidates:
             candidates.append(cur)
             latest = cur
-        cache_set(key, latest, candidates)
+        cache_put(key, latest, candidates)   # <-- put()
         log.debug(f"[CACHE MISS] {key} → latest={latest}, candidates={candidates}")
 
     keep = set(x for x in (latest, cur) if x)
