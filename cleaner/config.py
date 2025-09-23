@@ -1,58 +1,49 @@
 import os, configparser
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.getenv("CONFIG_FILE", os.path.join(os.path.dirname(BASE_DIR), "configlocal.cfg"))
+ROOT_DIR = os.path.dirname(BASE_DIR)
+CONFIG_FILE = os.getenv("CONFIG_FILE", os.path.join(ROOT_DIR, "configlocal.cfg"))
 
 cfg = configparser.ConfigParser()
-if not cfg.read(CONFIG_FILE):
-    raise SystemExit(f"Config file not found or unreadable: {CONFIG_FILE}")
+cfg.read(CONFIG_FILE)
 
 def getbool(section, key, default=False):
-    try: return cfg.getboolean(section, key)
+    try: return cfg.getboolean(section, key, fallback=default)
     except Exception: return default
 
-# General
-LOG_LEVEL      = cfg.get("general", "LOG_LEVEL").upper()
-DRY_RUN        = getbool("general", "DRY_RUN",)
-ONLY_UPGRADES  = getbool("general", "ONLY_UPGRADES")
-
 # Server
-SERVER_HOST    = cfg.get("server", "HOST")
-SERVER_PORT    = int(cfg.get("server", "PORT"))
+SERVER_HOST = cfg.get("server", "HOST", fallback="0.0.0.0")
+SERVER_PORT = int(cfg.get("server", "PORT", fallback="8124"))
 
 # Logging
-LOG_FILE       = cfg.get("logging", "LOG_FILE")
-LOG_MAX_MB     = int(cfg.get("logging", "MAX_MB"))
-LOG_BACKUPS    = int(cfg.get("logging", "BACKUPS"))
-WERK_LEVEL     = cfg.get("logging", "WERKZEUG_LEVEL").upper()
+LOG_FILE    = cfg.get("logging", "LOG_FILE", fallback="/app/logs/webhook-cleaner.log")
+LOG_MAX_MB  = int(cfg.get("logging", "MAX_MB", fallback="20"))
+LOG_BACKUPS = int(cfg.get("logging", "BACKUPS", fallback="7"))
+WERK_LEVEL  = (cfg.get("logging", "WERKZEUG_LEVEL", fallback="WARNING") or "WARNING").upper()
+LOG_LEVEL   = (cfg.get("general", "LOG_LEVEL", fallback="INFO") or "INFO").upper()
 
-# External services
-SONARR_URL = cfg.get("sonarr", "URL").rstrip("/")
-SONARR_KEY = cfg.get("sonarr", "API_KEY")
-
-RADARR_URL = cfg.get("radarr", "URL").rstrip("/")
-RADARR_KEY = cfg.get("radarr", "API_KEY")
-
-QBIT_HOST  = cfg.get("qbittorrent", "HOST" ).rstrip("/")
-QBIT_USER  = cfg.get("qbittorrent", "USER" )
-QBIT_PASS  = cfg.get("qbittorrent", "PASS")
+# qBittorrent
+QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrent:8080").rstrip("/")
+QBIT_USER = cfg.get("qbittorrent", "USER", fallback="admin")
+QBIT_PASS = cfg.get("qbittorrent", "PASS", fallback="adminadmin")
 
 # Gotify
-GOTIFY_ENABLED = getbool("gotify", "ENABLED")
-GOTIFY_URL     = cfg.get("gotify", "URL").rstrip("/")
-GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN")
-GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY"))
-GOTIFY_TITLE   = cfg.get("gotify", "TITLE")
+GOTIFY_ENABLED = getbool("gotify", "ENABLED", False)
+GOTIFY_URL     = (cfg.get("gotify", "URL", fallback="")).rstrip("/")
+GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN", fallback="")
+GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY", fallback="5"))
+GOTIFY_TITLE   = cfg.get("gotify", "TITLE", fallback="Cleaner qBittorrent")
 
-#CACHE
-CACHE_FILE = cfg.get("cache", "CACHE_FILE")
-CACHE_TTL  = int(cfg.get("cache", "CACHE_TTL"))      # 0 = jamais d'expiration
-CACHE_MAX_ITEMS = int(cfg.get("cache", "CACHE_MAX_ITEMS"))
+# Catalog
+CATALOG_FILE   = cfg.get("catalog", "FILE", fallback="/app/data/catalog.json")
 
+# Sonarr (pour builder uniquement)
+SONARR_URL = cfg.get("sonarr", "URL", fallback="http://sonarr:8989").rstrip("/")
+SONARR_KEY = cfg.get("sonarr", "API_KEY", fallback="")
 
-# HTTP tunables
-REQ_TIMEOUT      = 12
-MAX_RETRIES      = 3
-HIST_PAGE_SIZE   = 1000
-HIST_MAX_MISSES  = 3
-HIST_MAX_PAGES   = 20
+# Radarr (pour builder uniquement)
+RADARR_URL = cfg.get("radarr", "URL", fallback="http://radarr:7878").rstrip("/")
+RADARR_KEY = cfg.get("radarr", "API_KEY", fallback="")
+
+# Misc
+DRY_RUN = getbool("general", "DRY_RUN", False)
