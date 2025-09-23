@@ -21,6 +21,8 @@ RUN pip install flask requests
 # Code
 COPY app.py ./app.py
 COPY cleaner ./cleaner
+COPY tools ./tools       # <— ajoute ça
+
 
 # Crée les dossiers logs + data (cache) dans l'image
 RUN mkdir -p /app/logs /app/data && chown -R 10001:10001 /app
