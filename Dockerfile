@@ -21,7 +21,7 @@ RUN pip install flask requests
 # Code
 COPY app.py ./app.py
 COPY cleaner ./cleaner
-COPY tools ./tools       # <— ajoute ça
+COPY tools ./tools
 
 
 # Crée les dossiers logs + data (cache) dans l'image
