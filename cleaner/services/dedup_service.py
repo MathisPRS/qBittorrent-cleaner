@@ -11,23 +11,29 @@ def purge_for_episodes(series_id: int, episode_ids: list[int], label: str):
     s = cat["sonarr"].get(str(series_id)) or {}
     removed, already_gone, errors = [], [], []
 
+    # union des candidats à supprimer sur tous les épisodes concernés
     to_delete = set()
     for eid in episode_ids:
         entry = s.get("episodes", {}).get(str(eid))
         if entry:
             to_delete.update(compute_to_delete(entry))
+    to_delete = list(sorted(to_delete))
 
     client = QbitClient(); client.login()
-    present_map = client.info_map(list(to_delete))
-    for h in to_delete:
-        if h not in present_map:
-            already_gone.append(h); continue
-        ok, name = client.delete(h, delete_files=True, max_retry=2)
-        if ok:
-            removed.append({"hash": h, "name": name})
-        else:
-            errors.append({"hash": h, "name": name})
 
+    # --- suppression groupée ---
+    result = client.delete_many(to_delete, delete_files=True)
+    # absent = pas/plus dans qB (déjà parti)
+    already_gone.extend(result.get("absent", []))
+
+    # mappe les résultats pour MAJ des tombstones
+    if result.get("deleted"):
+        # tuples (hash, name)
+        removed.extend([{"hash": h, "name": name} for (h, name) in result["deleted"]])
+    if result.get("failed"):
+        errors.extend([{"hash": h, "name": name} for (h, name) in result["failed"]])
+
+    # MAJ tombstones si on a supprimé des choses
     if removed:
         hashes = [x["hash"] for x in removed]
         for eid in episode_ids:
@@ -39,23 +45,23 @@ def purge_for_episodes(series_id: int, episode_ids: list[int], label: str):
 
     return removed, already_gone, errors
 
+
 def purge_for_movie(movie_id: int, label: str):
     cat = catalog_repo.load_catalog()
     entry = cat["radarr"].get(str(movie_id)) or {}
     removed, already_gone, errors = [], [], []
 
     to_delete = compute_to_delete(entry)
-
     client = QbitClient(); client.login()
-    present_map = client.info_map(to_delete)
-    for h in to_delete:
-        if h not in present_map:
-            already_gone.append(h); continue
-        ok, name = client.delete(h, delete_files=True, max_retry=2)
-        if ok:
-            removed.append({"hash": h, "name": name})
-        else:
-            errors.append({"hash": h, "name": name})
+
+    # --- suppression groupée ---
+    result = client.delete_many(to_delete, delete_files=True)
+    already_gone.extend(result.get("absent", []))
+
+    if result.get("deleted"):
+        removed.extend([{"hash": h, "name": name} for (h, name) in result["deleted"]])
+    if result.get("failed"):
+        errors.extend([{"hash": h, "name": name} for (h, name) in result["failed"]])
 
     if removed:
         mark_removed(entry, [x["hash"] for x in removed])
