@@ -9,51 +9,54 @@ from .config import LOG_FILE, LOG_LEVEL, LOG_MAX_MB, LOG_BACKUPS, WERK_LEVEL
 
 DEFAULT_FORMAT = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
 
-def _make_stream_handler(level: int):
+def _make_stream_handler(level: int) -> logging.Handler:
     sh = logging.StreamHandler()
     sh.setLevel(level)
     sh.setFormatter(logging.Formatter(DEFAULT_FORMAT))
     return sh
 
-def _make_file_handler(path: str, level: int, max_bytes: int, backups: int):
+def _make_file_handler(path: str, level: int, max_bytes: int, backups: int) -> logging.Handler:
     # s'assure que le dossier existe
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    folder = os.path.dirname(path) or "."
+    os.makedirs(folder, exist_ok=True)
     fh = RotatingFileHandler(path, maxBytes=max_bytes, backupCount=backups, encoding="utf-8")
     fh.setLevel(level)
     fh.setFormatter(logging.Formatter(DEFAULT_FORMAT))
     return fh
 
+# Logger racine de l'application (nom configurable si besoin)
+_ROOT_LOGGER_NAME = "webhook-cleaner"
+_initialized = False
+
 def init_logging(app=None) -> logging.Logger:
-    """
-    Initialise le logging global et (si fourni) attache les mêmes handlers à app.logger.
+    
+    global _initialized
 
-    - app: instance Flask optionnelle. Si fournie, app.logger utilisera les handlers.
-    - Retourne un logger racine pour ton application ("webhook-cleaner").
-    """
-
-    # Normalise le niveau
     level_name = (LOG_LEVEL or "INFO").upper()
     root_level = getattr(logging, level_name, logging.INFO)
 
-    # Logger principal de l'application
-    logger = logging.getLogger("webhook-cleaner")
+    logger = logging.getLogger(_ROOT_LOGGER_NAME)
     logger.setLevel(root_level)
     logger.propagate = False  # on gère explicitement les handlers
 
-    # Evite d'ajouter plusieurs fois les mêmes handlers
-    if not logger.handlers:
+    if not _initialized:
+        # Evite d'ajouter plusieurs fois les mêmes handlers
         # Toujours ajouter un StreamHandler pour voir les logs en console (utile dev / docker)
         logger.addHandler(_make_stream_handler(root_level))
 
         # Handler sur fichier si configuré
         if LOG_FILE:
             try:
-                file_handler = _make_file_handler(LOG_FILE, root_level, LOG_MAX_MB * 1024 * 1024, LOG_BACKUPS)
+                max_mb = int(LOG_MAX_MB or 10)
+                backups = int(LOG_BACKUPS or 5)
+                file_handler = _make_file_handler(LOG_FILE, root_level, max_mb * 1024 * 1024, backups)
                 logger.addHandler(file_handler)
                 logger.info(f"File logging enabled → {LOG_FILE}")
             except Exception as e:
                 # Ne crashe pas si dossier/permission pose pb
                 logger.warning(f"File logging disabled: {e}; stdout only.")
+
+        _initialized = True
 
     # Configure niveau werkzeug (flask) séparément : il logge sous 'werkzeug'
     werk_level_name = (WERK_LEVEL or "WARNING").upper()
@@ -62,15 +65,33 @@ def init_logging(app=None) -> logging.Logger:
 
     # Si on a une app Flask, attache les mêmes handlers à app.logger
     if app is not None:
-        # On attache uniquement si app.logger n'a pas de handlers identiques
         flask_logger = app.logger
         flask_logger.setLevel(root_level)
-        # Eviter duplicate : supprime handlers qui auraient le même type que ceux de 'logger'
+
+        # Eviter duplicate : ajoute uniquement handlers qui n'existent pas encore
         existing_types = {type(h) for h in flask_logger.handlers}
         for h in logger.handlers:
             if type(h) not in existing_types:
                 flask_logger.addHandler(h)
-        # Désactiver propagation pour éviter duplications via root logger
         flask_logger.propagate = False
 
     return logger
+
+def get_logger(name: Optional[str] = None, app=None) -> logging.Logger:
+    
+    # S'assurer que l'initialisation globale est faite
+    root = init_logging(app=app)
+    if not name:
+        name = _ROOT_LOGGER_NAME
+    log = logging.getLogger(name)
+    log.setLevel(root.level)
+
+    # Attacher handlers du root logger si nécessaire (évite duplications)
+    root_handler_types = {type(h) for h in root.handlers}
+    existing_types = {type(h) for h in log.handlers}
+    for h in root.handlers:
+        if type(h) not in existing_types:
+            log.addHandler(h)
+
+    log.propagate = False
+    return log

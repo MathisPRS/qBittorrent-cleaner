@@ -1,0 +1,1784 @@
+{
+  "radarr": {
+    "329": {
+      "title": "The Fantastic 4: First Steps",
+      "year": 2025
+    },
+    "445": {
+      "title": "The Amazing Spider-Man 2",
+      "year": 2014
+    },
+    "447": {
+      "title": "Iron Man 2",
+      "year": 2010
+    },
+    "446": {
+      "title": "Iron Man 3",
+      "year": 2013
+    },
+    "444": {
+      "title": "The Amazing Spider-Man",
+      "year": 2012
+    },
+    "437": {
+      "title": "The Nice Guys",
+      "year": 2016
+    },
+    "434": {
+      "title": "Gran Turismo",
+      "year": 2023
+    },
+    "383": {
+      "title": "Ne Zha",
+      "year": 2019
+    },
+    "332": {
+      "title": "Ice Road: Vengeance",
+      "year": 2025
+    },
+    "317": {
+      "title": "Superman",
+      "year": 2025
+    },
+    "340": {
+      "title": "Corpse Bride",
+      "year": 2005
+    },
+    "436": {
+      "title": "Nobody 2",
+      "year": 2025
+    },
+    "397": {
+      "title": "Elio",
+      "year": 2025
+    },
+    "148": {
+      "title": "1917",
+      "year": 2019
+    },
+    "109": {
+      "title": "Lilo & Stitch",
+      "year": 2025
+    },
+    "433": {
+      "title": "The Amateur",
+      "year": 2025
+    },
+    "432": {
+      "title": "The Map That Leads to You",
+      "year": 2025
+    },
+    "431": {
+      "title": "Mission: Impossible - The Final Reckoning",
+      "year": 2025
+    },
+    "115": {
+      "title": "Harry Potter and the Order of the Phoenix",
+      "year": 2007
+    },
+    "108": {
+      "title": "F1",
+      "year": 2025
+    },
+    "428": {
+      "title": "The Good Dinosaur",
+      "year": 2015
+    },
+    "424": {
+      "title": "Ratatouille",
+      "year": 2007
+    },
+    "426": {
+      "title": "Turning Red",
+      "year": 2022
+    },
+    "427": {
+      "title": "Onward",
+      "year": 2020
+    },
+    "425": {
+      "title": "Brave",
+      "year": 2012
+    },
+    "423": {
+      "title": "The Bad Guys 2",
+      "year": 2025
+    },
+    "422": {
+      "title": "Finding Dory",
+      "year": 2016
+    },
+    "419": {
+      "title": "How to Train Your Dragon 2",
+      "year": 2014
+    },
+    "420": {
+      "title": "How to Train Your Dragon: The Hidden World",
+      "year": 2019
+    },
+    "421": {
+      "title": "Raya and the Last Dragon",
+      "year": 2021
+    },
+    "418": {
+      "title": "How to Train Your Dragon",
+      "year": 2010
+    },
+    "414": {
+      "title": "Spider-Man: Homecoming",
+      "year": 2017
+    },
+    "417": {
+      "title": "Southpaw",
+      "year": 2015
+    },
+    "416": {
+      "title": "Spider-Man: No Way Home",
+      "year": 2021
+    },
+    "411": {
+      "title": "Hotel Transylvania 2",
+      "year": 2015
+    },
+    "415": {
+      "title": "Spider-Man: Far From Home",
+      "year": 2019
+    },
+    "413": {
+      "title": "The Bad Guys",
+      "year": 2022
+    },
+    "412": {
+      "title": "Hotel Transylvania 3: Summer Vacation",
+      "year": 2018
+    },
+    "410": {
+      "title": "Hotel Transylvania",
+      "year": 2012
+    },
+    "409": {
+      "title": "The Secret Life of Pets 2",
+      "year": 2019
+    },
+    "405": {
+      "title": "Sing 2",
+      "year": 2021
+    },
+    "404": {
+      "title": "Sing",
+      "year": 2016
+    },
+    "406": {
+      "title": "The Princess and the Frog",
+      "year": 2009
+    },
+    "403": {
+      "title": "Migration",
+      "year": 2023
+    },
+    "402": {
+      "title": "The Lion King",
+      "year": 2019
+    },
+    "401": {
+      "title": "Mufasa: The Lion King",
+      "year": 2024
+    },
+    "396": {
+      "title": "Jewel Thief - The Heist Begins",
+      "year": 2025
+    },
+    "395": {
+      "title": "C'est la vie!",
+      "year": 2017
+    },
+    "391": {
+      "title": "Real Steel",
+      "year": 2011
+    },
+    "215": {
+      "title": "A Mother's Special Love",
+      "year": 2024
+    },
+    "318": {
+      "title": "How to Train Your Dragon",
+      "year": 2025
+    },
+    "389": {
+      "title": "Mickey 17",
+      "year": 2025
+    },
+    "387": {
+      "title": "Jurassic World Rebirth",
+      "year": 2025
+    },
+    "385": {
+      "title": "Stomp the Yard",
+      "year": 2007
+    },
+    "386": {
+      "title": "Stomp the Yard 2: Homecoming",
+      "year": 2010
+    },
+    "166": {
+      "title": "28 Years Later",
+      "year": 2025
+    },
+    "380": {
+      "title": "Fatal",
+      "year": 2010
+    },
+    "379": {
+      "title": "The Chronicles of Narnia: The Voyage of the Dawn Treader",
+      "year": 2010
+    },
+    "377": {
+      "title": "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe",
+      "year": 2005
+    },
+    "376": {
+      "title": "The Notebook",
+      "year": 2004
+    },
+    "374": {
+      "title": "The Marching Band",
+      "year": 2024
+    },
+    "371": {
+      "title": "Le Panache",
+      "year": 2024
+    },
+    "370": {
+      "title": "Riviera Revenge",
+      "year": 2024
+    },
+    "281": {
+      "title": "Madagascar",
+      "year": 2005
+    },
+    "367": {
+      "title": "From Dusk Till Dawn",
+      "year": 1996
+    },
+    "366": {
+      "title": "The Deer Hunter",
+      "year": 1978
+    },
+    "365": {
+      "title": "Pretty Woman",
+      "year": 1990
+    },
+    "362": {
+      "title": "Cars",
+      "year": 2006
+    },
+    "360": {
+      "title": "Pitch Perfect 2",
+      "year": 2015
+    },
+    "363": {
+      "title": "Cars 2",
+      "year": 2011
+    },
+    "364": {
+      "title": "Cars 3",
+      "year": 2017
+    },
+    "361": {
+      "title": "Pitch Perfect 3",
+      "year": 2017
+    },
+    "359": {
+      "title": "Pitch Perfect",
+      "year": 2012
+    },
+    "358": {
+      "title": "V for Vendetta",
+      "year": 2006
+    },
+    "355": {
+      "title": "Open Season",
+      "year": 2006
+    },
+    "356": {
+      "title": "Open Season 2",
+      "year": 2008
+    },
+    "357": {
+      "title": "Open Season 3",
+      "year": 2010
+    },
+    "348": {
+      "title": "Thor: Ragnarok",
+      "year": 2017
+    },
+    "354": {
+      "title": "Joker",
+      "year": 2019
+    },
+    "351": {
+      "title": "Little Miss Sunshine",
+      "year": 2006
+    },
+    "345": {
+      "title": "Avengers: Endgame",
+      "year": 2019
+    },
+    "349": {
+      "title": "Thor: Love and Thunder",
+      "year": 2022
+    },
+    "341": {
+      "title": "Sully",
+      "year": 2016
+    },
+    "344": {
+      "title": "Avengers: Infinity War",
+      "year": 2018
+    },
+    "342": {
+      "title": "The Avengers",
+      "year": 2012
+    },
+    "353": {
+      "title": "The Menu",
+      "year": 2022
+    },
+    "350": {
+      "title": "The Grand Budapest Hotel",
+      "year": 2014
+    },
+    "343": {
+      "title": "Avengers: Age of Ultron",
+      "year": 2015
+    },
+    "352": {
+      "title": "Birdman or (The Unexpected Virtue of Ignorance)",
+      "year": 2014
+    },
+    "347": {
+      "title": "Thor: The Dark World",
+      "year": 2013
+    },
+    "346": {
+      "title": "Thor",
+      "year": 2011
+    },
+    "336": {
+      "title": "Transformers: Dark of the Moon",
+      "year": 2011
+    },
+    "339": {
+      "title": "Fury",
+      "year": 2014
+    },
+    "337": {
+      "title": "Transformers: Age of Extinction",
+      "year": 2014
+    },
+    "338": {
+      "title": "Transformers: The Last Knight",
+      "year": 2017
+    },
+    "335": {
+      "title": "Transformers: Revenge of the Fallen",
+      "year": 2009
+    },
+    "334": {
+      "title": "Transformers",
+      "year": 2007
+    },
+    "234": {
+      "title": "High School Musical 3: Senior Year",
+      "year": 2008
+    },
+    "333": {
+      "title": "Pulp Fiction",
+      "year": 1994
+    },
+    "331": {
+      "title": "The Ice Road",
+      "year": 2021
+    },
+    "325": {
+      "title": "12 Angry Men",
+      "year": 1997
+    },
+    "302": {
+      "title": "Yao",
+      "year": 2019
+    },
+    "323": {
+      "title": "The Shawshank Redemption",
+      "year": 1994
+    },
+    "322": {
+      "title": "The Godfather Part III",
+      "year": 1990
+    },
+    "327": {
+      "title": "Once Upon a Time in the West",
+      "year": 1968
+    },
+    "320": {
+      "title": "The Godfather",
+      "year": 1972
+    },
+    "326": {
+      "title": "The Green Mile",
+      "year": 1999
+    },
+    "321": {
+      "title": "The Godfather Part II",
+      "year": 1974
+    },
+    "324": {
+      "title": "12 Angry Men",
+      "year": 1957
+    },
+    "319": {
+      "title": "American Assassin",
+      "year": 2017
+    },
+    "311": {
+      "title": "The Father",
+      "year": 2020
+    },
+    "312": {
+      "title": "Black Box",
+      "year": 2021
+    },
+    "313": {
+      "title": "Another Round",
+      "year": 2020
+    },
+    "314": {
+      "title": "The Asadas!",
+      "year": 2020
+    },
+    "305": {
+      "title": "The Mauritanian",
+      "year": 2021
+    },
+    "307": {
+      "title": "Despicable Me",
+      "year": 2010
+    },
+    "310": {
+      "title": "Despicable Me 4",
+      "year": 2024
+    },
+    "308": {
+      "title": "Despicable Me 2",
+      "year": 2013
+    },
+    "309": {
+      "title": "Despicable Me 3",
+      "year": 2017
+    },
+    "306": {
+      "title": "Sonic the Hedgehog 3",
+      "year": 2024
+    },
+    "292": {
+      "title": "Green Book",
+      "year": 2018
+    },
+    "300": {
+      "title": "Ford v Ferrari",
+      "year": 2019
+    },
+    "304": {
+      "title": "The Courier",
+      "year": 2020
+    },
+    "297": {
+      "title": "Until Dawn",
+      "year": 2025
+    },
+    "303": {
+      "title": "The Imitation Game",
+      "year": 2014
+    },
+    "301": {
+      "title": "The Mule",
+      "year": 2018
+    },
+    "299": {
+      "title": "Beautiful Boy",
+      "year": 2018
+    },
+    "298": {
+      "title": "The Gorge",
+      "year": 2025
+    },
+    "293": {
+      "title": "Once Upon a Time... in Hollywood",
+      "year": 2019
+    },
+    "291": {
+      "title": "The Outpost",
+      "year": 2020
+    },
+    "296": {
+      "title": "The Order",
+      "year": 2024
+    },
+    "290": {
+      "title": "Greyhound",
+      "year": 2020
+    },
+    "289": {
+      "title": "Now You See Me 2",
+      "year": 2016
+    },
+    "288": {
+      "title": "Now You See Me",
+      "year": 2013
+    },
+    "287": {
+      "title": "Beauty and the Beast",
+      "year": 2017
+    },
+    "283": {
+      "title": "Madagascar 3: Europe's Most Wanted",
+      "year": 2012
+    },
+    "278": {
+      "title": "A Star Is Born",
+      "year": 2018
+    },
+    "284": {
+      "title": "The 5th Wave",
+      "year": 2016
+    },
+    "275": {
+      "title": "The Hangover",
+      "year": 2009
+    },
+    "282": {
+      "title": "Madagascar: Escape 2 Africa",
+      "year": 2008
+    },
+    "276": {
+      "title": "The Hangover Part II",
+      "year": 2011
+    },
+    "286": {
+      "title": "I Am Legend",
+      "year": 2007
+    },
+    "285": {
+      "title": "The Road",
+      "year": 2009
+    },
+    "273": {
+      "title": "Monsters, Inc.",
+      "year": 2001
+    },
+    "280": {
+      "title": "The Truman Show",
+      "year": 1998
+    },
+    "279": {
+      "title": "Novocaine",
+      "year": 2025
+    },
+    "277": {
+      "title": "The Hangover Part III",
+      "year": 2013
+    },
+    "274": {
+      "title": "Monsters University",
+      "year": 2013
+    },
+    "260": {
+      "title": "Maze Runner: The Scorch Trials",
+      "year": 2015
+    },
+    "267": {
+      "title": "The Hunger Games",
+      "year": 2012
+    },
+    "270": {
+      "title": "The Hunger Games: Mockingjay - Part 2",
+      "year": 2015
+    },
+    "268": {
+      "title": "The Hunger Games: Catching Fire",
+      "year": 2013
+    },
+    "269": {
+      "title": "The Hunger Games: Mockingjay - Part 1",
+      "year": 2014
+    },
+    "271": {
+      "title": "The Hunger Games: The Ballad of Songbirds & Snakes",
+      "year": 2023
+    },
+    "264": {
+      "title": "John Wick: Chapter 3 - Parabellum",
+      "year": 2019
+    },
+    "263": {
+      "title": "John Wick: Chapter 2",
+      "year": 2017
+    },
+    "262": {
+      "title": "John Wick",
+      "year": 2014
+    },
+    "272": {
+      "title": "Napoleon",
+      "year": 2023
+    },
+    "266": {
+      "title": "Memento",
+      "year": 2000
+    },
+    "261": {
+      "title": "Maze Runner: The Death Cure",
+      "year": 2018
+    },
+    "259": {
+      "title": "The Maze Runner",
+      "year": 2014
+    },
+    "256": {
+      "title": "Troy",
+      "year": 2004
+    },
+    "207": {
+      "title": "300: Rise of an Empire",
+      "year": 2014
+    },
+    "254": {
+      "title": "Barbie",
+      "year": 2023
+    },
+    "253": {
+      "title": "Influencer",
+      "year": 2023
+    },
+    "252": {
+      "title": "No Game, No Life: Zero",
+      "year": 2017
+    },
+    "251": {
+      "title": "HAIKYU!! The Dumpster Battle",
+      "year": 2024
+    },
+    "250": {
+      "title": "Jujutsu Kaisen 0",
+      "year": 2021
+    },
+    "248": {
+      "title": "The Artist",
+      "year": 2011
+    },
+    "247": {
+      "title": "Les Misérables",
+      "year": 2019
+    },
+    "245": {
+      "title": "Frozen II",
+      "year": 2019
+    },
+    "244": {
+      "title": "Frozen",
+      "year": 2013
+    },
+    "246": {
+      "title": "WALL·E",
+      "year": 2008
+    },
+    "205": {
+      "title": "Mission: Impossible - Dead Reckoning Part One",
+      "year": 2023
+    },
+    "220": {
+      "title": "Tinker Bell",
+      "year": 2008
+    },
+    "231": {
+      "title": "Extremely Wicked, Shockingly Evil and Vile",
+      "year": 2019
+    },
+    "211": {
+      "title": "Delete History",
+      "year": 2020
+    },
+    "210": {
+      "title": "The Scammers",
+      "year": 2024
+    },
+    "236": {
+      "title": "Camp Rock 2: The Final Jam",
+      "year": 2010
+    },
+    "235": {
+      "title": "Camp Rock",
+      "year": 2008
+    },
+    "221": {
+      "title": "Tinker Bell and the Lost Treasure",
+      "year": 2009
+    },
+    "228": {
+      "title": "The Theory of Everything",
+      "year": 2014
+    },
+    "222": {
+      "title": "Tinker Bell and the Great Fairy Rescue",
+      "year": 2010
+    },
+    "240": {
+      "title": "Princess Mononoke",
+      "year": 1997
+    },
+    "225": {
+      "title": "Tinker Bell and the Legend of the NeverBeast",
+      "year": 2014
+    },
+    "229": {
+      "title": "Boléro",
+      "year": 2024
+    },
+    "242": {
+      "title": "Trolls World Tour",
+      "year": 2020
+    },
+    "243": {
+      "title": "Trolls Band Together",
+      "year": 2023
+    },
+    "233": {
+      "title": "High School Musical 2",
+      "year": 2007
+    },
+    "232": {
+      "title": "High School Musical",
+      "year": 2006
+    },
+    "238": {
+      "title": "The Sea Beast",
+      "year": 2022
+    },
+    "241": {
+      "title": "Trolls",
+      "year": 2016
+    },
+    "237": {
+      "title": "Rise of the Guardians",
+      "year": 2012
+    },
+    "239": {
+      "title": "Wish Dragon",
+      "year": 2021
+    },
+    "230": {
+      "title": "Joy",
+      "year": 2024
+    },
+    "227": {
+      "title": "The Wolf's Call",
+      "year": 2019
+    },
+    "226": {
+      "title": "Spellbound",
+      "year": 2024
+    },
+    "219": {
+      "title": "Asterix & Obelix: The Middle Kingdom",
+      "year": 2023
+    },
+    "223": {
+      "title": "Secret of the Wings",
+      "year": 2012
+    },
+    "224": {
+      "title": "Tinker Bell and the Pirate Fairy",
+      "year": 2014
+    },
+    "216": {
+      "title": "IF",
+      "year": 2024
+    },
+    "217": {
+      "title": "Sonic the Hedgehog 2",
+      "year": 2022
+    },
+    "218": {
+      "title": "Sonic the Hedgehog",
+      "year": 2020
+    },
+    "213": {
+      "title": "The Super Mario Bros. Movie",
+      "year": 2023
+    },
+    "212": {
+      "title": "Cruella",
+      "year": 2021
+    },
+    "214": {
+      "title": "Bye Bye Morons",
+      "year": 2020
+    },
+    "209": {
+      "title": "Beating Hearts",
+      "year": 2024
+    },
+    "208": {
+      "title": "Beautiful Minds",
+      "year": 2022
+    },
+    "203": {
+      "title": "War for the Planet of the Apes",
+      "year": 2017
+    },
+    "201": {
+      "title": "Rise of the Planet of the Apes",
+      "year": 2011
+    },
+    "202": {
+      "title": "Dawn of the Planet of the Apes",
+      "year": 2014
+    },
+    "204": {
+      "title": "Kingdom of the Planet of the Apes",
+      "year": 2024
+    },
+    "53": {
+      "title": "Ice Age",
+      "year": 2002
+    },
+    "171": {
+      "title": "Akira",
+      "year": 1988
+    },
+    "106": {
+      "title": "Togo",
+      "year": 2019
+    },
+    "75": {
+      "title": "The Lord of the Rings: The Fellowship of the Ring",
+      "year": 2001
+    },
+    "68": {
+      "title": "The Prestige",
+      "year": 2006
+    },
+    "173": {
+      "title": "Kung Fu Panda 2",
+      "year": 2011
+    },
+    "172": {
+      "title": "Kung Fu Panda",
+      "year": 2008
+    },
+    "73": {
+      "title": "No Time to Die",
+      "year": 2021
+    },
+    "167": {
+      "title": "Grave of the Fireflies",
+      "year": 1988
+    },
+    "81": {
+      "title": "Pirates of the Caribbean: On Stranger Tides",
+      "year": 2011
+    },
+    "85": {
+      "title": "Pirates of the Caribbean: Dead Man's Chest",
+      "year": 2006
+    },
+    "79": {
+      "title": "The Hobbit: The Desolation of Smaug",
+      "year": 2013
+    },
+    "200": {
+      "title": "A Silent Voice: The Movie",
+      "year": 2016
+    },
+    "198": {
+      "title": "Top Gun: Maverick",
+      "year": 2022
+    },
+    "197": {
+      "title": "Top Gun",
+      "year": 1986
+    },
+    "199": {
+      "title": "Everything Everywhere All at Once",
+      "year": 2022
+    },
+    "123": {
+      "title": "South Terminal",
+      "year": 2019
+    },
+    "196": {
+      "title": "F9",
+      "year": 2021
+    },
+    "192": {
+      "title": "Fast Five",
+      "year": 2011
+    },
+    "184": {
+      "title": "A Little Something Extra",
+      "year": 2024
+    },
+    "91": {
+      "title": "Drive",
+      "year": 2011
+    },
+    "194": {
+      "title": "Furious 7",
+      "year": 2015
+    },
+    "193": {
+      "title": "Fast & Furious 6",
+      "year": 2013
+    },
+    "183": {
+      "title": "Fast X",
+      "year": 2023
+    },
+    "190": {
+      "title": "The Fast and the Furious: Tokyo Drift",
+      "year": 2006
+    },
+    "195": {
+      "title": "The Fate of the Furious",
+      "year": 2017
+    },
+    "189": {
+      "title": "2 Fast 2 Furious",
+      "year": 2003
+    },
+    "191": {
+      "title": "Fast & Furious",
+      "year": 2009
+    },
+    "188": {
+      "title": "The Fast and the Furious",
+      "year": 2001
+    },
+    "71": {
+      "title": "Skyfall",
+      "year": 2012
+    },
+    "187": {
+      "title": "Allegiant",
+      "year": 2016
+    },
+    "186": {
+      "title": "Insurgent",
+      "year": 2015
+    },
+    "185": {
+      "title": "Divergent",
+      "year": 2014
+    },
+    "161": {
+      "title": "Flow",
+      "year": 2024
+    },
+    "136": {
+      "title": "Sinners",
+      "year": 2025
+    },
+    "182": {
+      "title": "Brother Bear 2",
+      "year": 2006
+    },
+    "95": {
+      "title": "Spirited Away",
+      "year": 2001
+    },
+    "141": {
+      "title": "Shrek",
+      "year": 2001
+    },
+    "65": {
+      "title": "The Clovehitch Killer",
+      "year": 2018
+    },
+    "43": {
+      "title": "A Minecraft Movie",
+      "year": 2025
+    },
+    "137": {
+      "title": "The Hateful Eight",
+      "year": 2015
+    },
+    "177": {
+      "title": "The First Purge",
+      "year": 2018
+    },
+    "156": {
+      "title": "Fantastic Beasts: The Secrets of Dumbledore",
+      "year": 2022
+    },
+    "51": {
+      "title": "Coco",
+      "year": 2017
+    },
+    "86": {
+      "title": "Bridget Jones: Mad About the Boy",
+      "year": 2025
+    },
+    "131": {
+      "title": "Se7en",
+      "year": 1995
+    },
+    "70": {
+      "title": "Casino Royale",
+      "year": 2006
+    },
+    "98": {
+      "title": "Forrest Gump",
+      "year": 1994
+    },
+    "140": {
+      "title": "Blade Runner 2049",
+      "year": 2017
+    },
+    "159": {
+      "title": "The Martian",
+      "year": 2015
+    },
+    "56": {
+      "title": "Ice Age: Continental Drift",
+      "year": 2012
+    },
+    "103": {
+      "title": "The Stronghold",
+      "year": 2021
+    },
+    "175": {
+      "title": "Kung Fu Panda 4",
+      "year": 2024
+    },
+    "178": {
+      "title": "The Purge: Election Year",
+      "year": 2016
+    },
+    "74": {
+      "title": "Snowden",
+      "year": 2016
+    },
+    "59": {
+      "title": "The Darkest Minds",
+      "year": 2018
+    },
+    "55": {
+      "title": "Ice Age: Dawn of the Dinosaurs",
+      "year": 2009
+    },
+    "101": {
+      "title": "Star Wars: The Last Jedi",
+      "year": 2017
+    },
+    "126": {
+      "title": "Dune",
+      "year": 2021
+    },
+    "84": {
+      "title": "Pirates of the Caribbean: Dead Men Tell No Tales",
+      "year": 2017
+    },
+    "125": {
+      "title": "Whiplash",
+      "year": 2014
+    },
+    "107": {
+      "title": "12 Years a Slave",
+      "year": 2013
+    },
+    "105": {
+      "title": "The Wild Robot",
+      "year": 2024
+    },
+    "61": {
+      "title": "Pacific Rim",
+      "year": 2013
+    },
+    "60": {
+      "title": "Inception",
+      "year": 2010
+    },
+    "41": {
+      "title": "The Twilight Saga: Breaking Dawn - Part 1",
+      "year": 2011
+    },
+    "146": {
+      "title": "Soul",
+      "year": 2020
+    },
+    "72": {
+      "title": "Spectre",
+      "year": 2015
+    },
+    "102": {
+      "title": "November",
+      "year": 2022
+    },
+    "120": {
+      "title": "Jarhead",
+      "year": 2005
+    },
+    "92": {
+      "title": "The Dark Knight",
+      "year": 2008
+    },
+    "139": {
+      "title": "Inside Out 2",
+      "year": 2024
+    },
+    "42": {
+      "title": "The Twilight Saga: Breaking Dawn - Part 2",
+      "year": 2012
+    },
+    "153": {
+      "title": "Babylon",
+      "year": 2022
+    },
+    "110": {
+      "title": "Kraven the Hunter",
+      "year": 2024
+    },
+    "40": {
+      "title": "The Twilight Saga: Eclipse",
+      "year": 2010
+    },
+    "39": {
+      "title": "The Twilight Saga: New Moon",
+      "year": 2009
+    },
+    "49": {
+      "title": "Elemental",
+      "year": 2023
+    },
+    "37": {
+      "title": "The Intouchables",
+      "year": 2011
+    },
+    "63": {
+      "title": "Furiosa: A Mad Max Saga",
+      "year": 2024
+    },
+    "99": {
+      "title": "Django Unchained",
+      "year": 2012
+    },
+    "130": {
+      "title": "Spider-Man: Across the Spider-Verse",
+      "year": 2023
+    },
+    "50": {
+      "title": "Finding Nemo",
+      "year": 2003
+    },
+    "87": {
+      "title": "Moana 2",
+      "year": 2024
+    },
+    "147": {
+      "title": "Bullet Train",
+      "year": 2022
+    },
+    "119": {
+      "title": "Cyrano, My Love",
+      "year": 2018
+    },
+    "163": {
+      "title": "The Revenant",
+      "year": 2015
+    },
+    "169": {
+      "title": "Elvis",
+      "year": 2022
+    },
+    "158": {
+      "title": "Bohemian Rhapsody",
+      "year": 2018
+    },
+    "100": {
+      "title": "Bubble",
+      "year": 2022
+    },
+    "64": {
+      "title": "Titanic",
+      "year": 1997
+    },
+    "129": {
+      "title": "The Batman",
+      "year": 2022
+    },
+    "88": {
+      "title": "Mortal Engines",
+      "year": 2018
+    },
+    "89": {
+      "title": "Take Shelter",
+      "year": 2011
+    },
+    "57": {
+      "title": "Ice Age: Collision Course",
+      "year": 2016
+    },
+    "90": {
+      "title": "Fight Club",
+      "year": 1999
+    },
+    "122": {
+      "title": "American Sniper",
+      "year": 2014
+    },
+    "160": {
+      "title": "The Pianist",
+      "year": 2002
+    },
+    "67": {
+      "title": "Shutter Island",
+      "year": 2010
+    },
+    "38": {
+      "title": "Twilight",
+      "year": 2008
+    },
+    "157": {
+      "title": "Rango",
+      "year": 2011
+    },
+    "155": {
+      "title": "Fantastic Beasts: The Crimes of Grindelwald",
+      "year": 2018
+    },
+    "97": {
+      "title": "The Northman",
+      "year": 2022
+    },
+    "82": {
+      "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+      "year": 2003
+    },
+    "76": {
+      "title": "The Lord of the Rings: The Return of the King",
+      "year": 2003
+    },
+    "142": {
+      "title": "Shrek 2",
+      "year": 2004
+    },
+    "83": {
+      "title": "Pirates of the Caribbean: At World's End",
+      "year": 2007
+    },
+    "133": {
+      "title": "Inglourious Basterds",
+      "year": 2009
+    },
+    "170": {
+      "title": "Curiosa",
+      "year": 2019
+    },
+    "77": {
+      "title": "The Lord of the Rings: The Two Towers",
+      "year": 2002
+    },
+    "138": {
+      "title": "Baby Driver",
+      "year": 2017
+    },
+    "162": {
+      "title": "Encanto",
+      "year": 2021
+    },
+    "111": {
+      "title": "Harry Potter and the Philosopher's Stone",
+      "year": 2001
+    },
+    "151": {
+      "title": "Toy Story 3",
+      "year": 2010
+    },
+    "181": {
+      "title": "Brother Bear",
+      "year": 2003
+    },
+    "168": {
+      "title": "The Handmaiden",
+      "year": 2016
+    },
+    "96": {
+      "title": "Gladiator",
+      "year": 2000
+    },
+    "176": {
+      "title": "The Forever Purge",
+      "year": 2021
+    },
+    "124": {
+      "title": "I Want to Eat Your Pancreas",
+      "year": 2018
+    },
+    "121": {
+      "title": "Lone Survivor",
+      "year": 2013
+    },
+    "114": {
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "year": 2004
+    },
+    "132": {
+      "title": "Gone Girl",
+      "year": 2014
+    },
+    "149": {
+      "title": "Toy Story",
+      "year": 1995
+    },
+    "150": {
+      "title": "Toy Story 2",
+      "year": 1999
+    },
+    "58": {
+      "title": "The Ice Age Adventures of Buck Wild",
+      "year": 2022
+    },
+    "52": {
+      "title": "Up",
+      "year": 2009
+    },
+    "47": {
+      "title": "Step Up Revolution",
+      "year": 2012
+    },
+    "46": {
+      "title": "Step Up",
+      "year": 2006
+    },
+    "116": {
+      "title": "Harry Potter and the Half-Blood Prince",
+      "year": 2009
+    },
+    "113": {
+      "title": "Harry Potter and the Goblet of Fire",
+      "year": 2005
+    },
+    "165": {
+      "title": "28 Weeks Later",
+      "year": 2007
+    },
+    "80": {
+      "title": "The Hobbit: The Battle of the Five Armies",
+      "year": 2014
+    },
+    "78": {
+      "title": "The Hobbit: An Unexpected Journey",
+      "year": 2012
+    },
+    "69": {
+      "title": "Parasite",
+      "year": 2019
+    },
+    "62": {
+      "title": "Mad Max: Fury Road",
+      "year": 2015
+    },
+    "128": {
+      "title": "Spider-Man: Into the Spider-Verse",
+      "year": 2018
+    },
+    "112": {
+      "title": "Harry Potter and the Chamber of Secrets",
+      "year": 2002
+    },
+    "118": {
+      "title": "Harry Potter and the Deathly Hallows: Part 2",
+      "year": 2011
+    },
+    "117": {
+      "title": "Harry Potter and the Deathly Hallows: Part 1",
+      "year": 2010
+    },
+    "135": {
+      "title": "Tenet",
+      "year": 2020
+    },
+    "93": {
+      "title": "Oppenheimer",
+      "year": 2023
+    },
+    "127": {
+      "title": "Dune: Part Two",
+      "year": 2024
+    },
+    "94": {
+      "title": "Interstellar",
+      "year": 2014
+    },
+    "134": {
+      "title": "Dunkirk",
+      "year": 2017
+    },
+    "66": {
+      "title": "The Wolf of Wall Street",
+      "year": 2013
+    },
+    "154": {
+      "title": "Fantastic Beasts and Where to Find Them",
+      "year": 2016
+    },
+    "180": {
+      "title": "The Purge",
+      "year": 2013
+    },
+    "179": {
+      "title": "The Purge: Anarchy",
+      "year": 2014
+    },
+    "174": {
+      "title": "Kung Fu Panda 3",
+      "year": 2016
+    },
+    "164": {
+      "title": "28 Days Later",
+      "year": 2002
+    },
+    "152": {
+      "title": "Toy Story 4",
+      "year": 2019
+    },
+    "144": {
+      "title": "Shrek Forever After",
+      "year": 2010
+    },
+    "143": {
+      "title": "Shrek the Third",
+      "year": 2007
+    },
+    "54": {
+      "title": "Ice Age: The Meltdown",
+      "year": 2006
+    },
+    "375": {
+      "title": "Not Without My Shrink",
+      "year": 2024
+    },
+    "295": {
+      "title": "Everything's Going to Be Great",
+      "year": 2025
+    },
+    "448": {
+      "title": "Linkin Park: FROM ZERO",
+      "year": 2024
+    },
+    "398": {
+      "title": "Fate/stay night: Heaven's Feel I. Presage Flower",
+      "year": 2017
+    },
+    "399": {
+      "title": "Fate/stay night: Heaven's Feel II. Lost Butterfly",
+      "year": 2019
+    },
+    "400": {
+      "title": "Fate/stay night: Heaven's Feel III. Spring Song",
+      "year": 2020
+    },
+    "372": {
+      "title": "King of My Castle",
+      "year": 2024
+    },
+    "438": {
+      "title": "Sirāt",
+      "year": 2025
+    },
+    "439": {
+      "title": "Bronson",
+      "year": 2009
+    },
+    "408": {
+      "title": "Surf's Up 2: WaveMania",
+      "year": 2017
+    },
+    "407": {
+      "title": "Surf's Up",
+      "year": 2007
+    },
+    "48": {
+      "title": "Step Up 3D",
+      "year": 2010
+    },
+    "328": {
+      "title": "Once Upon a Time… One Flew Over the Cuckoo's Nest",
+      "year": 2011
+    },
+    "449": {
+      "title": "Schindler's List",
+      "year": 1993
+    },
+    "451": {
+      "title": "McWalter",
+      "year": 2025
+    },
+    "450": {
+      "title": "American Beauty",
+      "year": 1999
+    },
+    "452": {
+      "title": "Bring It On: All or Nothing",
+      "year": 2006
+    },
+    "453": {
+      "title": "Free Guy",
+      "year": 2021
+    },
+    "456": {
+      "title": "Aftersun",
+      "year": 2022
+    },
+    "454": {
+      "title": "About Time",
+      "year": 2013
+    },
+    "457": {
+      "title": "Inside Out",
+      "year": 2015
+    },
+    "458": {
+      "title": "Back in Action",
+      "year": 2025
+    },
+    "455": {
+      "title": "Two Is a Family",
+      "year": 2016
+    },
+    "460": {
+      "title": "The Garden of Words",
+      "year": 2013
+    },
+    "462": {
+      "title": "Mulan",
+      "year": 2020
+    },
+    "463": {
+      "title": "Mulan",
+      "year": 1998
+    },
+    "461": {
+      "title": "Mulan II",
+      "year": 2004
+    },
+    "464": {
+      "title": "Coraline",
+      "year": 2009
+    },
+    "468": {
+      "title": "Megamind",
+      "year": 2010
+    },
+    "467": {
+      "title": "Puss in Boots: The Last Wish",
+      "year": 2022
+    },
+    "466": {
+      "title": "Puss in Boots",
+      "year": 2011
+    },
+    "465": {
+      "title": "Zootopia",
+      "year": 2016
+    },
+    "469": {
+      "title": "Shark Tale",
+      "year": 2004
+    },
+    "471": {
+      "title": "The Croods",
+      "year": 2013
+    },
+    "472": {
+      "title": "The Croods: A New Age",
+      "year": 2020
+    },
+    "470": {
+      "title": "OVERLORD: The Sacred Kingdom",
+      "year": 2024
+    },
+    "473": {
+      "title": "Guillermo del Toro's Pinocchio",
+      "year": 2022
+    },
+    "474": {
+      "title": "The Social Network",
+      "year": 2010
+    },
+    "441": {
+      "title": "Our Fault",
+      "year": 2025
+    },
+    "475": {
+      "title": "The Lost Bus",
+      "year": 2025
+    },
+    "382": {
+      "title": "Freakier Friday",
+      "year": 2025
+    },
+    "390": {
+      "title": "William Tell",
+      "year": 2025
+    },
+    "384": {
+      "title": "Ne Zha 2",
+      "year": 2025
+    },
+    "483": {
+      "title": "Love at Second Sight",
+      "year": 2019
+    },
+    "488": {
+      "title": "Employee of the Month",
+      "year": 2022
+    },
+    "486": {
+      "title": "Tenor",
+      "year": 2022
+    },
+    "491": {
+      "title": "Here and There",
+      "year": 2024
+    },
+    "490": {
+      "title": "The Year of the Shark",
+      "year": 2022
+    },
+    "495": {
+      "title": "Deerskin",
+      "year": 2019
+    },
+    "494": {
+      "title": "Someone, Somewhere",
+      "year": 2019
+    },
+    "493": {
+      "title": "The Small Victories",
+      "year": 2023
+    },
+    "500": {
+      "title": "The Rookie Guide",
+      "year": 2025
+    },
+    "492": {
+      "title": "Ride Above",
+      "year": 2022
+    },
+    "502": {
+      "title": "Wicked",
+      "year": 2024
+    },
+    "501": {
+      "title": "A Very Jonas Christmas Movie",
+      "year": 2025
+    },
+    "499": {
+      "title": "Scream VI",
+      "year": 2023
+    },
+    "496": {
+      "title": "When in Rome",
+      "year": 2002
+    },
+    "435": {
+      "title": "The Smashing Machine",
+      "year": 2025
+    },
+    "487": {
+      "title": "Champagne !",
+      "year": 2022
+    },
+    "504": {
+      "title": "C'est magnifique !",
+      "year": 2022
+    },
+    "476": {
+      "title": "The Long Walk",
+      "year": 2025
+    },
+    "508": {
+      "title": "White Chicks",
+      "year": 2004
+    },
+    "479": {
+      "title": "Oblivion",
+      "year": 2013
+    },
+    "478": {
+      "title": "Last Sentinel",
+      "year": 2023
+    },
+    "440": {
+      "title": "One Battle After Another",
+      "year": 2025
+    },
+    "485": {
+      "title": "My Afternoons with Margueritte",
+      "year": 2010
+    },
+    "489": {
+      "title": "La Fille d'un grand amour",
+      "year": 2025
+    },
+    "509": {
+      "title": "Champagne Problems",
+      "year": 2025
+    },
+    "506": {
+      "title": "The Companions",
+      "year": 2022
+    },
+    "442": {
+      "title": "TRON: Ares",
+      "year": 2025
+    },
+    "512": {
+      "title": "In Your Dreams",
+      "year": 2025
+    },
+    "514": {
+      "title": "Treasure Planet",
+      "year": 2002
+    },
+    "515": {
+      "title": "Train Dreams",
+      "year": 2025
+    },
+    "518": {
+      "title": "Serial Driver",
+      "year": 2023
+    },
+    "516": {
+      "title": "The Help",
+      "year": 2011
+    },
+    "517": {
+      "title": "She Rides Shotgun",
+      "year": 2025
+    },
+    "519": {
+      "title": "Troll",
+      "year": 2022
+    },
+    "477": {
+      "title": "Chainsaw Man - The Movie: Reze Arc",
+      "year": 2025
+    },
+    "482": {
+      "title": "Wicked: For Good",
+      "year": 2025
+    }
+  }
+}

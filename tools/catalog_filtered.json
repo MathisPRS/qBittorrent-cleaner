@@ -1,0 +1,797 @@
+{
+  "radarr": {
+    "430": {
+      "title": "My Oxford Year",
+      "year": 2025,
+      "latest": "1817cddb09cd5e5b29f8b9728880d5a4f0e777e2",
+      "candidates": [],
+      "torrentTitle": "My.Oxford.Year.2025.MULTi.2160p.NF.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-SHADOW.mkv",
+      "cross_seed": []
+    },
+    "381": {
+      "title": "Freaky Friday",
+      "year": 2003,
+      "latest": "65262f2540b7f1361e4d60882b57158f32e4e3c2",
+      "candidates": [],
+      "torrentTitle": "Freaky.Friday.2003.MULTi.TRUEFRENCH.1080p.WEB-DL.H265-Slay3R.mkv",
+      "cross_seed": []
+    },
+    "378": {
+      "title": "The Chronicles of Narnia: Prince Caspian",
+      "year": 2008,
+      "latest": "4a9c627af5221d7b6674a5409d7047a6bba446f0",
+      "candidates": [],
+      "torrentTitle": "The Chronicles Of Narnia Prince Caspian (2008) VF2-ENG AC3 BluRay 1080p x264.GHT",
+      "cross_seed": []
+    },
+    "373": {
+      "title": "The Gardener",
+      "year": 2025,
+      "latest": "2bd7736e939080806a85efe6438963dcf721d3f7",
+      "candidates": [],
+      "torrentTitle": "Le.Jardinier.2025.FRENCH.1080p.WEB.H265-FW",
+      "cross_seed": []
+    },
+    "369": {
+      "title": "The Idea of You",
+      "year": 2024,
+      "latest": "d23304dfc5754d5a79a57c80c9cbc7416763f539",
+      "candidates": [],
+      "torrentTitle": "The.Idea.Of.You.2024.Multi.VF2.WEB.2160p.HDR.DV.EAC3.HEVC-D5T0.mkv",
+      "cross_seed": []
+    },
+    "294": {
+      "title": "Brick",
+      "year": 2025,
+      "latest": "042e87d4bd22c7b3b74a6355d7b25daea9341df6",
+      "candidates": [],
+      "torrentTitle": "Brick.2025.CUSTOM.MULTi.DV.HDR.2160p.NF.WEB.H265.Atmos-zYz.mkv",
+      "cross_seed": []
+    },
+    "265": {
+      "title": "John Wick: Chapter 4",
+      "year": 2023,
+      "latest": "ae9fc151ae0d6368e9076530a0bc1882f8622c5e",
+      "candidates": [],
+      "torrentTitle": "John Wick Chapter 4 (2023) MULTi VFF 2160p 10bit 4KLight DV HDR BluRay TrueHD Atmos 7.1 x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "258": {
+      "title": "Avatar: The Way of Water",
+      "year": 2022,
+      "latest": "9712be7c84a1e5e20d279937c77898d087141119",
+      "candidates": [],
+      "torrentTitle": "Avatar The Way of Water (2022) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay DDP 5.1 Atmos x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "656c344d7744fc86c5999287e97a33a1993d3a4a",
+          "name": "Avatar The Way of Water (2022) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay DDP 5.1 Atmos x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "257": {
+      "title": "Avatar",
+      "year": 2009,
+      "latest": "a153fcb28f76eee8a483c1c4a3f9c3516f8d3660",
+      "candidates": [],
+      "torrentTitle": "Avatar (2009) Hybrid MULTi VFI 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD Atmos 7.1 x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "a3aef8ceeced4f31a7e3164234c1011b147cd72b",
+          "name": "Avatar (2009) Hybrid MULTi VFI 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD Atmos 7.1 x265-QTZ.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "206": {
+      "title": "300",
+      "year": 2007,
+      "latest": "3b7cd471a73366ac8cdaf62735740dff32a577e3",
+      "candidates": [],
+      "torrentTitle": "300.2006.MULTi.2160p.UHD.Bluray.x265.HDR10-FLOP.mkv",
+      "cross_seed": []
+    },
+    "45": {
+      "title": "The Count of Monte Cristo",
+      "year": 2024,
+      "latest": "260c7167f18fc9e7ab959431e04ee6974050d4dd",
+      "candidates": [],
+      "torrentTitle": "Le Comte de Monte Cristo (2024) VOF 2160p 10bit 4KLight DV HDR BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "5ecf53d1b5ac9f82b9481e4e6197e5a9fc41ea78",
+          "name": "Le Comte de Monte Cristo (2024) VOF 2160p 10bit 4KLight DV HDR BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "44": {
+      "title": "Your Name.",
+      "year": 2016,
+      "latest": "4da1c57ba1e57a31b95c405e572ad4e96fd0f482",
+      "candidates": [],
+      "torrentTitle": "Your Name (2016) MULTi VFI 2160p 10bit 4KLight HDR BluRay DTS-HD MA 5.1 x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "c200b6d047469e91c39faad8ed99e863f99321fe",
+          "name": "Your Name (2016) MULTi VFI 2160p 10bit 4KLight HDR BluRay DTS-HD MA 5.1 x265-QTZ.mkv",
+          "category": "cross-seed-link"
+        },
+        {
+          "hash": "37adbc3ab4878e6483f8f9d259e2f7007cc48065",
+          "name": "Your Name (2016) MULTi VFI 2160p 10bit 4KLight HDR BluRay DTS-HD MA 5.1 x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "480": {
+      "title": "The Black Phone",
+      "year": 2022,
+      "latest": "22733d1bb4abe1b2be4a9b1239b1a95178ce03fc",
+      "candidates": [],
+      "torrentTitle": "Black.Phone.2022.MULTi.VFF.2160p.DV.BluRay.4KLight.TrueHD.7.1.Atmos.x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "481": {
+      "title": "Black Phone 2",
+      "year": 2025,
+      "latest": "c5ec0003a1c85e7ce3fd5c9ba63f79466a743514",
+      "candidates": [],
+      "torrentTitle": "Black.Phone.2.2025.Multi.Vf2.Hdr10.Dv.2160P.Webrip.X265-Neostark.mkv",
+      "cross_seed": []
+    },
+    "503": {
+      "title": "Roofman",
+      "year": 2025,
+      "latest": "feec7e1d5ffc2ed236fb2223306c9beb1abaa351",
+      "candidates": [],
+      "torrentTitle": "Roofman.2025.MULTI.VF2.2160p.WEBRip.AMZ.DV.HDR10+.x265.EAC3.5.1-Amen.mkv",
+      "cross_seed": []
+    },
+    "523": {
+      "title": "Spider-Man 3",
+      "year": 2007,
+      "latest": "edfad628a9df0a2706f002ee68e3ffb4d91fb26b",
+      "candidates": [],
+      "torrentTitle": "Spider-Man 3 (2007) MULTi VFF 2160p 10bit 4KLight HDR BluRay x265 AAC 7.1-QTZ.mkv",
+      "cross_seed": []
+    },
+    "521": {
+      "title": "Spider-Man",
+      "year": 2002,
+      "latest": "0d61bba9930164d0b3d43f3940be2c95d7a8a402",
+      "candidates": [],
+      "torrentTitle": "Spider-Man (2002) MULTi VFF 2160p 10bit 4KLight HDR BluRay x265 AAC 7.1-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "2d06db061dcceeaf474b8ed378c2e6a053f0badf",
+          "name": "Spider-Man (2002) MULTi VFF 2160p 10bit 4KLight HDR BluRay x265 AAC 7.1-QTZ.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "522": {
+      "title": "Spider-Man 2",
+      "year": 2004,
+      "latest": "f12cb0cbe7dbcd4a2a3fe0f8de6f9b349a632fa5",
+      "candidates": [],
+      "torrentTitle": "Spider-Man 2 (2004) MULTi VFF 2160p 10bit 4KLight HDR BluRay x265 AAC 7.1-QTZ.mkv",
+      "cross_seed": []
+    },
+    "525": {
+      "title": "Ballerina",
+      "year": 2025,
+      "latest": "298e2ec0a1fb051376a391cccf7e05790622421e",
+      "candidates": [],
+      "torrentTitle": "Ballerina (2025) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "3dc7142d08610608f638e59c2305944878f91ea6",
+          "name": "Ballerina (2025) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "527": {
+      "title": "Final Destination Bloodlines",
+      "year": 2025,
+      "latest": "4b49d11720371e978260c9ef6e25f5960ae0c4dd",
+      "candidates": [],
+      "torrentTitle": "Final Destination Bloodlines (2025) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "479c95c93a3e6d3bd19314fcec887a14afea6919",
+          "name": "Final Destination Bloodlines (2025) Hybrid MULTi VFF 2160p 10bit 4KLight DV HDR10Plus BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "526": {
+      "title": "My Fault",
+      "year": 2023,
+      "latest": "6d13de5f82bc1b7967e76ccadafa1db0e11d2fae",
+      "candidates": [],
+      "torrentTitle": "My.Fault.2023.MULTi.VF2.HDR.2160p.WEB.H265-FW",
+      "cross_seed": []
+    },
+    "528": {
+      "title": "Godzilla x Kong: The New Empire",
+      "year": 2024,
+      "latest": "a9bef1651ab6734f73f9ede804270a1091f80344",
+      "candidates": [],
+      "torrentTitle": "Godzilla x Kong The New Empire (2024) MULTi VFF 2160p 10bit 4KLight DV HDR BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "529": {
+      "title": "The Apprentice",
+      "year": 2024,
+      "latest": "10789e373fb5560971c710d736be4eea4a79d383",
+      "candidates": [],
+      "torrentTitle": "The.Apprentice.2024.REPACK.MULTI.AD.2160P.WEBRip.iT.HDR.x265.AC3.5.1-Amen.mkv",
+      "cross_seed": []
+    },
+    "429": {
+      "title": "No Signal!",
+      "year": 2025,
+      "latest": "466b56e3fbe512e654dd3b84878185e9d50d61a3",
+      "candidates": [],
+      "torrentTitle": "Ya.pas.de.reseau.2025.FRENCH.2160p.SDR.WEB-DL.H265-Slay3R.mkv",
+      "cross_seed": []
+    },
+    "393": {
+      "title": "Now You See Me: Now You Don't",
+      "year": 2025,
+      "latest": "fbf2d271f6639db774ca396a3f60dc3c06da3327",
+      "candidates": [],
+      "torrentTitle": "Now.You.See.Me.Now.You.Dont.2025.MULTi.VFQ.2160p.DV.HDR.WEB-DL.DDP5.1.H265-BOUC.mkv",
+      "cross_seed": []
+    },
+    "532": {
+      "title": "Kaamelott: The First Chapter",
+      "year": 2021,
+      "latest": "abe2c2f81eb9361de891fb6eb2a19da22490646d",
+      "candidates": [],
+      "torrentTitle": "Kaamelott Premier Volet (2021) French VOF 2160p 10bit 4KLight DOLBY VISION BluRay TrueHD Atmos 7.1 x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "535": {
+      "title": "Killers of the Flower Moon",
+      "year": 2023,
+      "latest": "4592ac28e35e79296af0433649217ff0176e94e4",
+      "candidates": [],
+      "torrentTitle": "Killers.Of.The.Flower.Moon.2023.Multi.Vfi.Hdr.2160p.10bit.Webrip.aac.5.1.x265-neostark.mkv",
+      "cross_seed": [
+        {
+          "hash": "27e8c2c55d75d8860deda9fcd1beae97eb9fb448",
+          "name": "Killers.Of.The.Flower.Moon.2023.Multi.Vfi.Hdr.2160p.10bit.Webrip.aac.5.1.x265-neostark.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "536": {
+      "title": "The Zone of Interest",
+      "year": 2023,
+      "latest": "0c55f373653febf588693646c486ac7edaa470be",
+      "candidates": [],
+      "torrentTitle": "The Zone of Interest (2023) Hybrid MULTi VFI 2160p 10bit 4KLight DV HDR BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "537": {
+      "title": "No Country for Old Men",
+      "year": 2007,
+      "latest": "519aee8581c35761c4df482623bbf6f36d20be46",
+      "candidates": [],
+      "torrentTitle": "No Country for Old Men (2007) MULTi VFF 2160p 10bit 4KLight DV BluRay AC3 5.1 x265.mkv",
+      "cross_seed": []
+    },
+    "538": {
+      "title": "Frankenstein",
+      "year": 2025,
+      "latest": "54cbe9b094abaac352dba7880c31971b80c68d7f",
+      "candidates": [],
+      "torrentTitle": "Frankenstein.2025.MULTI.AD.2160p.WEBRip.NF.DV.HDR.x265.EAC3.5.1.Atmos-Amen.mkv",
+      "cross_seed": [
+        {
+          "hash": "ddc6927d5c15b62b5571dc51b7cef2865a43f077",
+          "name": "Frankenstein.2025.MULTI.AD.2160p.WEBRip.NF.DV.HDR.x265.EAC3.5.1.Atmos-Amen.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "539": {
+      "title": "Godzilla Minus One",
+      "year": 2023,
+      "latest": "d34a0bbd9154f84fe2189de21ff48d2834bfb596",
+      "candidates": [],
+      "torrentTitle": "Godzilla Minus One (2023) MULTi VFI 2160p 10bit 4KLight DV HDR BluRay TrueHD 7.1 Atmos x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "540": {
+      "title": "The Tree of Life",
+      "year": 2011,
+      "latest": "6f8e88ba2be0219100db47700e63a08c66a6f614",
+      "candidates": [],
+      "torrentTitle": "The.Tree.Of.Life.2011.BluRay x265 1080p MULTI- AZAZE..mkv",
+      "cross_seed": []
+    },
+    "541": {
+      "title": "World War Z",
+      "year": 2013,
+      "latest": "5595125b000bd5686bdc6355c8f56dec7795ee19",
+      "candidates": [],
+      "torrentTitle": "World War Z (2013) MULTi VFF 2160p 10bit 4KLight DV HDR BluRay DTS-HD MA 7.1 x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "542": {
+      "title": "Silence",
+      "year": 2016,
+      "latest": "5cb8962c9267dc940334b3899617289d7efa4473",
+      "candidates": [],
+      "torrentTitle": "Silence (2016) MULTI VFF 1080p BluRay EAC3 5.1 x265-k7.mkv",
+      "cross_seed": [
+        {
+          "hash": "54d8fa68f111f2cef168723320a647e3c693cad1",
+          "name": "Silence (2016) MULTI VFF 1080p BluRay EAC3 5.1 x265-k7.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "544": {
+      "title": "Apocalypto",
+      "year": 2006,
+      "latest": "00288e490970a21b78276eff18e2aee0d3fbe251",
+      "candidates": [],
+      "torrentTitle": "Apocalypto.2006.VOSTFR.1080p.BluRay.x264-Gimly26.mkv",
+      "cross_seed": []
+    },
+    "546": {
+      "title": "The Last Duel",
+      "year": 2021,
+      "latest": "19155edd308764fb602c73044f0b45c71eebcecd",
+      "candidates": [],
+      "torrentTitle": "The Last Duel (2021) Hybrid MULTi VFF 2160p 10bit 4KLight DOLBY VISION BluRay TrueHD Atmos 7.1 x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "392": {
+      "title": "Zootopia 2",
+      "year": 2025,
+      "latest": "63c6656e6d2989593e2a97bdac5c0bc16eaaf8b2",
+      "candidates": [],
+      "torrentTitle": "Zootopia.2.2025.VOSTFR.1080p.WEB-DL.x264.DD.2.0.mkv",
+      "cross_seed": []
+    },
+    "553": {
+      "title": "OSS 117: From Africa with Love",
+      "year": 2021,
+      "latest": "b9b5655a99bdce3b1c58d9f6972c68df59fedbf9",
+      "candidates": [],
+      "torrentTitle": "OSS.117.Alerte.Rouge.en.Afrique.Noire.2021.FRENCH.BDRip.x264-Ulysse",
+      "cross_seed": [
+        {
+          "hash": "bea6352eed1b6773fa1312aaa9633704c38f0bb2",
+          "name": "OSS.117.Alerte.Rouge.en.Afrique.Noire.2021.FRENCH.BDRip.x264-Ulysse",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "249": {
+      "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+      "year": 2025,
+      "latest": "eceeaca9aaec8bebe05d7fa9c5ffd565f9ccb0b8",
+      "candidates": [],
+      "torrentTitle": "Demon.Slayer.Kimetsu.No.Yaiba.Infinity.Castle.2025.FANSUB.VOSTFR.1080p.WEB-DL.x264-Slay3R (Gekijouban Kimetsu no Yaiba - Mugen-jou-hen, Demon Slayer: Kimetsu no Yaiba La Forteresse infinie)",
+      "cross_seed": []
+    },
+    "545": {
+      "title": "Escape from the 21st Century",
+      "year": 2024,
+      "latest": "39ea969d1423ab0a9b9a98f6c1c43a68cb61d829",
+      "candidates": [],
+      "torrentTitle": "Escape.from.the.21st.Century.2024.SUBFRENCH.1080p.WEB.x264-FW",
+      "cross_seed": []
+    },
+    "551": {
+      "title": "OSS 117: Lost in Rio",
+      "year": 2009,
+      "latest": "cc177902279c51e23b21967d70cd30160d8fb753",
+      "candidates": [],
+      "torrentTitle": "OSS 117 - Rio ne répond plus (2009) FRENCH VOF 1080p 10bit HDLight BluRay AC3 5.1 x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "a79805094c3b06da875551d08b02bb05203f2d6f",
+          "name": "OSS 117 - Rio ne répond plus (2009) FRENCH VOF 1080p 10bit HDLight BluRay AC3 5.1 x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "552": {
+      "title": "OSS 117: Cairo, Nest of Spies",
+      "year": 2006,
+      "latest": "f80d13c652bad9a03b761a21754a1469c7c14529",
+      "candidates": [],
+      "torrentTitle": "OSS 117 - Le Caire nid d'espions (2006) FRENCH VOF 1080p 10bit HDLight BluRay AC3 5.1 x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "c978f6576961df2e160afce6056f9909999e30d7",
+          "name": "OSS 117 - Le Caire nid d'espions (2006) FRENCH VOF 1080p 10bit HDLight BluRay AC3 5.1 x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "555": {
+      "title": "Look Back",
+      "year": 2024,
+      "latest": "5bd6ed591439161a8e2e4da9856f7d2cd023bde1",
+      "candidates": [],
+      "torrentTitle": "Look.Back.2024.MULTi.1080p.WEB.H264-FW",
+      "cross_seed": [
+        {
+          "hash": "26c256617fcd53cc5aed92fb80de67710638fbb5",
+          "name": "Look.Back.2024.MULTi.1080p.WEB.H264-FW",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "530": {
+      "title": "Hunting Season",
+      "year": 2025,
+      "latest": "4a3017dc5cfd29776a73ffb58782a33e6616e8a8",
+      "candidates": [],
+      "torrentTitle": "Hunting.Season.2025.FANSUB.VOSTFR.1080p.WEB-DL.H264-Slay3R.mkv",
+      "cross_seed": []
+    },
+    "511": {
+      "title": "The Shadow's Edge",
+      "year": 2025,
+      "latest": "28e7cbabc661dbdceb4c1974e23b5ab6697e53bd",
+      "candidates": [],
+      "torrentTitle": "The.Shadows.Edge.2025.1080p.VOSTFR.WEB.DDP.Atmos.5.1.HEVC.x265-FGF.mkv",
+      "cross_seed": [
+        {
+          "hash": "f5be065580732761601911eb0c61811ad817c4f0",
+          "name": "The.Shadows.Edge.2025.1080p.VOSTFR.WEB.DDP.Atmos.5.1.HEVC.x265-FGF.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "531": {
+      "title": "Predator: Badlands",
+      "year": 2025,
+      "latest": "3f3c0b5b395ae37ecb8931085d64fd6404dba033",
+      "candidates": [],
+      "torrentTitle": "Predator.Badlands.2025.MULTi.VF2.HDR.DV.2160p.WEBRip.10Bit.DDP5.1.ATMOS.AV1-SHADOW",
+      "cross_seed": []
+    },
+    "510": {
+      "title": "The Running Man",
+      "year": 2025,
+      "latest": "be3b2cd71b3e1554cb0dc72e9ad2483dc03fa083",
+      "candidates": [],
+      "torrentTitle": "The.Running.Man.2025.MULTi.VF2.2160p.4KLight.DV.HDR10Plus.WEBRip.EAC3.5.1.H265-LiHDL",
+      "cross_seed": []
+    },
+    "550": {
+      "title": "Step Up 2: The Streets",
+      "year": 2008,
+      "latest": "f1fa5a600e7dee3e603417e1560e772007a6df55",
+      "candidates": [],
+      "torrentTitle": "Step Up 2 The Streets (2008) MULTi VF2 [1080p] BluRay x264-PopHD.mkv",
+      "cross_seed": []
+    },
+    "556": {
+      "title": "The Lion King II: Simba's Pride",
+      "year": 1998,
+      "latest": "d06fa9be807976a98300af06899f01e05d03e7d3",
+      "candidates": [],
+      "torrentTitle": "Le.Roi.Lion.2.1998.MULTI.VFF.1080p.10bit.Bluray.AC3.5.1.x265-DeSs.mkv",
+      "cross_seed": []
+    },
+    "554": {
+      "title": "Wake Up Dead Man: A Knives Out Mystery",
+      "year": 2025,
+      "latest": "97994da2e6e2399cc2a4ae0140f1f5300a5b93ac",
+      "candidates": [],
+      "torrentTitle": "Wake.Up.Dead.Man.A.Knives.Out.Mystery.2025.MULTi.AD.2160p.NF.WEBRiP.DV.HDR.AV1-THESYNDiCATE.mkv",
+      "cross_seed": [
+        {
+          "hash": "852fefd319f3b593cd91a13191a6edb0828c547e",
+          "name": "Wake.Up.Dead.Man.A.Knives.Out.Mystery.2025.MULTi.AD.2160p.NF.WEBRiP.DV.HDR.AV1-THESYNDiCATE.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "559": {
+      "title": "The Greatest Showman",
+      "year": 2017,
+      "latest": "e85278e16b339e591989331dc9e47857409b8777",
+      "candidates": [],
+      "torrentTitle": "The Greatest Showman (2017) MULTi VFF 2160p 10bit 4KLight HDR BluRay AC3 5.1 x265-QTZ.mkv",
+      "cross_seed": [
+        {
+          "hash": "f1c064d489f96a8bbbc821eb87202ce62b4aae2e",
+          "name": "The Greatest Showman (2017) MULTi VFF 2160p 10bit 4KLight HDR BluRay AC3 5.1 x265-QTZ.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "560": {
+      "title": "Law Abiding Citizen",
+      "year": 2009,
+      "latest": "f3a036764062a4cdf97ba85e193d117b46a94939",
+      "candidates": [],
+      "torrentTitle": "Que Justice soit Faite (2009) [2160p HDR10 DoVi8 x265 MULTI VFF 5.1 DTS-HDMA VO 7.1 ATMOS].mkv",
+      "cross_seed": []
+    },
+    "549": {
+      "title": "The Great Flood",
+      "year": 2025,
+      "latest": "952b3f1d5395cc61085e6c7f3e162e7f0370791d",
+      "candidates": [],
+      "torrentTitle": "The.Great.Flood.2025.MULTi.2160p.DV.HDR.WEB.DDP5.1.Atmos.H265-ESPER.mkv",
+      "cross_seed": []
+    },
+    "562": {
+      "title": "Alvin and the Chipmunks: The Squeakquel",
+      "year": 2009,
+      "latest": "e0ba48f6ddb8fc1f3a3e163035fb944667081973",
+      "candidates": [],
+      "torrentTitle": "Alvin et les Chipmunks 2 (2009) [1080p] MULTi BluRay x264-PopHD.mkv",
+      "cross_seed": [
+        {
+          "hash": "b7559c8f1321d7fda75863cc945f1be410c8021d",
+          "name": "Alvin et les Chipmunks 2 (2009) [1080p] MULTi BluRay x264-PopHD.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "561": {
+      "title": "Alvin and the Chipmunks",
+      "year": 2007,
+      "latest": "2e823d36085acae488790c85593a2ab278e3e032",
+      "candidates": [],
+      "torrentTitle": "Alvin et les Chipmunks (2007) [1080p] MULTi BluRay x264-PopHD.mkv",
+      "cross_seed": [
+        {
+          "hash": "00ee7fc814252250ba8984c6ecfab67616791270",
+          "name": "Alvin et les Chipmunks (2007) [1080p] MULTi BluRay x264-PopHD.mkv",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "563": {
+      "title": "The Rip",
+      "year": 2026,
+      "latest": "199a4bd024e18a50bada644a580a190d19d09fed",
+      "candidates": [],
+      "torrentTitle": "The.Rip.2026.MULTI.1080p.WEB.X264-HiggsBoson",
+      "cross_seed": []
+    },
+    "568": {
+      "title": "The Wrecking Crew",
+      "year": 2026,
+      "latest": "e6ea7433edd38531927bc61f554b6c6456e88411",
+      "candidates": [],
+      "torrentTitle": "The.Wrecking.Crew.2026.MULTi.VF2.HDR.DV.2160p.WEBRip.10Bit.DDP5.1.ATMOS.AV1-SHADOW.mkv",
+      "cross_seed": [
+        {
+          "hash": "88f1df1f0cfe7f87e4e0f81380bb1f97493b04f2",
+          "name": "The.Wrecking.Crew.2026.MULTi.VF2.HDR.DV.2160p.WEBRip.10Bit.DDP5.1.ATMOS.AV1-SHADOW.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "569": {
+      "title": "Ocean's Eleven",
+      "year": 2001,
+      "latest": "f90041fe4025bd591241af512fbfce1f2139ec09",
+      "candidates": [],
+      "torrentTitle": "Ocean's Eleven (2001) MULTi VFF 1080p 10bit Bluray EAC3 5.1 x265-ASKO",
+      "cross_seed": []
+    },
+    "570": {
+      "title": "Notting Hill",
+      "year": 1999,
+      "latest": "f1009e3b5ac10117605f724c35761bbccb322dfa",
+      "candidates": [],
+      "torrentTitle": "Coup de foudre à Notting Hill (1999) (Notting Hill) 1080p x264 AC3 5.1 MULTI [NOEX].mkv",
+      "cross_seed": []
+    },
+    "572": {
+      "title": "Ferrari, Tsamere, Lecaplain : La Tournée du Trio",
+      "year": 2025,
+      "latest": "b75b0b1bd210e59bf1e9acb9e8ae96e340667220",
+      "candidates": [],
+      "torrentTitle": "Ferrari.Tsamere.Lecaplain.La.tournee.du.Trio.2025.FRENCH.1080p.WEB.x264-FW",
+      "cross_seed": [
+        {
+          "hash": "6794fa22a6eed48a7135220c1bd9ca47d6191d93",
+          "name": "Ferrari.Tsamere.Lecaplain.La.tournee.du.Trio.2025.FRENCH.1080p.WEB.x264-FW",
+          "category": "cross-seed-link"
+        }
+      ]
+    },
+    "573": {
+      "title": "Save the Last Dance",
+      "year": 2001,
+      "latest": "fdb8edfc68ce70baeb27f00a8207533999a5db01",
+      "candidates": [],
+      "torrentTitle": "Save.the.Last.Dance.2001.MULTI.VFF.1080p.BluRay.HDLight.H264.AC3.mehdibleu.mkv",
+      "cross_seed": []
+    },
+    "558": {
+      "title": "War of the Worlds",
+      "year": 2025,
+      "latest": "7dbf360990b70a5c861cb3ea6869d449fa308083",
+      "candidates": [],
+      "torrentTitle": "War.Of.The.Worlds.2025.MULTi.VF2.1080p.WEB.x265-TFA",
+      "cross_seed": []
+    },
+    "580": {
+      "title": "Wreck-It Ralph",
+      "year": 2012,
+      "latest": "2c73b4dd088405da881fe02733146926444d615c",
+      "candidates": [],
+      "torrentTitle": "Les.Mondes.De.Ralph.2012.MULTi.1080p.BluRay.HDLight.x265-H4S5S.mkv",
+      "cross_seed": []
+    },
+    "581": {
+      "title": "Luca",
+      "year": 2021,
+      "latest": "856abce644671f49e9a864fd62c68343a3a76d85",
+      "candidates": [],
+      "torrentTitle": "Luca (2021) Hybrid MULTi VFI 2160p 10bit 4KLight DOLBY VISION BluRay EAC3 7.1 x265-QTZ.mkv",
+      "cross_seed": []
+    },
+    "578": {
+      "title": "Tangled",
+      "year": 2010,
+      "latest": "c6ce6db8baf33b5070d86e4f5e3a397be346e78a",
+      "candidates": [],
+      "torrentTitle": "Raiponce.2010.MULTI.2160p.UHD.BluRay.x265.DTS HRA.ATMOS 7.1.-AZAZE.mkv",
+      "cross_seed": []
+    },
+    "582": {
+      "title": "Piper",
+      "year": 2016,
+      "latest": "4b1a64fcfa5a2ad2193b0447d032a0996c77c374",
+      "candidates": [],
+      "torrentTitle": "Piper 2016 1080p.AC3 1080p HDLight x265.mkv",
+      "cross_seed": []
+    },
+    "583": {
+      "title": "Moana",
+      "year": 2016,
+      "latest": "c85255abbda34649192a5b4085b0f56d47c93913",
+      "candidates": [],
+      "torrentTitle": "Moana.2016.MULTi.VFF.2160p.BLURAY.4KLight.DV.HDR.x265.TrueHD.7.1.Atmos.Bender_37.mkv",
+      "cross_seed": []
+    },
+    "579": {
+      "title": "Ralph Breaks the Internet",
+      "year": 2018,
+      "latest": "a2b417b6edbf3c7c5d359bd070a58c365ede02f5",
+      "candidates": [],
+      "torrentTitle": "Ralph.Breaks.the.Internet.2018.MULTi.TRUEFRENCH.1080p.BluRay.x264-Ulysse_YGG",
+      "cross_seed": []
+    },
+    "584": {
+      "title": "Hamnet",
+      "year": 2025,
+      "latest": "a3faa9209f31a6a37eef6c71743f1e2c18e64d36",
+      "candidates": [],
+      "torrentTitle": "Hamnet.2025.MULTi.HDR.DV.2160p.WEB.H265-SUPPLY",
+      "cross_seed": []
+    },
+    "585": {
+      "title": "Hard Truths",
+      "year": 2024,
+      "latest": "f3d88cc45269a947dfef5b4fcc286082d0b5ca6a",
+      "candidates": [],
+      "torrentTitle": "Hard.Truths.2024.SUBFRENCH.1080p.BluRay.x264-UKDHD",
+      "cross_seed": []
+    },
+    "588": {
+      "title": "Better Man",
+      "year": 2024,
+      "latest": "8be17edff9f369e787ddc516e84d782088dbf357",
+      "candidates": [],
+      "torrentTitle": "Better.Man.2024.MULTI.2160p.WEBRip.iT.DV.HDR10+.x265.EAC3.5.1.Atmos-Amen.mkv",
+      "cross_seed": []
+    },
+    "589": {
+      "title": "A Real Pain",
+      "year": 2024,
+      "latest": "178fbeac10486311fe88278a3b35129ca7fb5e0a",
+      "candidates": [],
+      "torrentTitle": "A.Real.Pain.2024.MULTi.HDR.2160p.WEB.H265-FW",
+      "cross_seed": []
+    },
+    "586": {
+      "title": "Thelma & Louise",
+      "year": 1991,
+      "latest": "019e6f96c8d2f568a086db80bcff76bc5c632268",
+      "candidates": [],
+      "torrentTitle": "Thelma.and.Louise.1991.MULTi.2160p.UHD.DV.x265-FLOP.mkv",
+      "cross_seed": []
+    },
+    "592": {
+      "title": "Memoir of a Snail",
+      "year": 2024,
+      "latest": "e0a755cb091a132c296b3a6b67deff842a432e9a",
+      "candidates": [],
+      "torrentTitle": "Memoir.of.a.Snail.2024.VOSTFR.SDR.2160p.WEB.H265-FW",
+      "cross_seed": []
+    },
+    "590": {
+      "title": "Eddington",
+      "year": 2025,
+      "latest": "94d6911bc21754e26e4a1b560bdd1ffe013b9c19",
+      "candidates": [],
+      "torrentTitle": "Eddington.2025.VFQ.2160p.HDR.DV.WEBRip.10Bit.DD5.1.ATMOS.AV1-SHADOW.mkv",
+      "cross_seed": []
+    },
+    "593": {
+      "title": "Afternoons of Solitude",
+      "year": 2025,
+      "latest": "252a545e944e69639ce202cee3d3c0e082633fd3",
+      "candidates": [],
+      "torrentTitle": "Afternoons.of.Solitude.2025.DOC.VOSTFR.1080p.WEB.H264-FW.mkv",
+      "cross_seed": [
+        {
+          "hash": "320abebea2fed37ae745dae37503bef9a33cb58f",
+          "name": "Afternoons.of.Solitude.2025.DOC.VOSTFR.1080p.WEB.H264-FW.mkv",
+          "category": "films.cross"
+        }
+      ]
+    },
+    "587": {
+      "title": "Zion",
+      "year": 2025,
+      "latest": "836ef86bdd6048746de644c7ee78a0ce68ff87cd",
+      "candidates": [],
+      "torrentTitle": "Zion.2025.FRENCH.SDR.2160p.WEB.H265-BULiTT.mkv",
+      "cross_seed": []
+    },
+    "594": {
+      "title": "May December",
+      "year": 2023,
+      "latest": "be72555cc77d16b691ad990701b4d4feafa6649e",
+      "candidates": [],
+      "torrentTitle": "May December.mkv",
+      "cross_seed": []
+    },
+    "595": {
+      "title": "Softie",
+      "year": 2022,
+      "latest": "477ec4fc34c03c1199ec49cffa963e3d6ddc5fe6",
+      "candidates": [],
+      "torrentTitle": "Petite.Nature.2022.FRENCH.1080p.WEBRip.x264.AAC-Prem.mkv",
+      "cross_seed": []
+    },
+    "548": {
+      "title": "The Housemaid",
+      "year": 2025,
+      "latest": "a37aacb3ab05690e95fbf8deeca5feaec1bbf706",
+      "candidates": [],
+      "torrentTitle": "The.Housemaid.2025.MULTi.TRUEFRENCH.2160p.4KLight.SDR.WEB-DL.H265-MWHAX7.mkv",
+      "cross_seed": []
+    },
+    "596": {
+      "title": "Gifted",
+      "year": 2017,
+      "latest": "c776c08aebc874f2b88aafd24c602e75a84108eb",
+      "candidates": [],
+      "torrentTitle": "Gifted.2017.MULTi.1080p.BluRay.x264-VENUE",
+      "cross_seed": []
+    },
+    "459": {
+      "title": "G-Day",
+      "year": 2025,
+      "latest": "00c421cb0b1329db776ec080cc1a4da618c62305",
+      "candidates": [],
+      "torrentTitle": "Le.Jour.J.2025.FRENCH.1080p.WEB.H264-NLX5.mkv",
+      "cross_seed": []
+    }
+  }
+}

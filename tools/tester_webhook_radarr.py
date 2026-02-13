@@ -3,7 +3,7 @@
 import json
 import requests
 
-URL = "http://127.0.0.1:8129/api/radarr"  # adapte si besoin
+URL = "http://127.0.0.1:8124/api/radarr"  # adapte si besoin
 
 payload = {
   "movie": {
