@@ -1,10 +1,24 @@
+# Introduction
 Ce projet a pour but de compenser un bug de qBittorrent.
 Quand on télécharge un torrent avec Sonarr, le torrent reste en place et un hardlink est créé puis déplacé à l’endroit voulu pour laisser le fichier en seed. 
 Mais si un upgrade automatique ou manuel remplace ce fichier, Sonarr supprime seulement le hardlink (et le remplace), pas le torrent. 
 On se retrouve alors avec des dizaines de torrents dupliqués pour le même épisode ou la même série.
 
-Ce repo stocke tout au format JSON : à chaque ajout ou mise à jour de fichier, les informations sont écrites dans un JSON.
-Pour utiliser le repos il faut :
+# Arborescance du Projet :
+
+- adapters/ --> methode (API) concernant les services externe au projet (Gotify, qBittorrent, etc)
+- api/ --> s'occupe des routes et redirige vers les controllers
+- controllers/ --> normalise les données et redirige vers les Services et Repositories
+- models/ --> Définis la structure de la base et des items 
+- repositories/ --> passe les requetes a la Base
+- services/ --> Regroupement de la logique metier
+
+
+# Setup son projet
+
+## Requirements
+
+- docker installé
 
 Creer un configlocal.cfg
 
@@ -46,6 +60,15 @@ PRIORITY =
 TITLE = 
 ```
 
-Déploiment du projet : 
+# Déploiment du projet : 
 
-gdocker compose up -d --build
+## Docker
+
+Le docker s'occupe de creer un container à partir du Dockerfile. L'image va normalement installer python3 et les lib nécessaire au projet
+
+Lancer la stack :
+```
+cd docker
+docker compose up -d --build
+```
+
