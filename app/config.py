@@ -11,9 +11,10 @@ def getbool(section, key, default=False):
     try: return cfg.getboolean(section, key, fallback=default)
     except Exception: return default
 
+
 # Server
 SERVER_HOST = cfg.get("server", "HOST", fallback="0.0.0.0")
-SERVER_PORT = int(cfg.get("server", "PORT", fallback="8124"))
+SERVER_PORT = int(cfg.get("server", "PORT", fallback="8129"))
 
 # Logging
 LOG_FILE    = cfg.get("logging", "LOG_FILE", fallback="/app/logs/webhook-cleaner.log")
@@ -34,9 +35,6 @@ GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN", fallback="")
 GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY", fallback="5"))
 GOTIFY_TITLE   = cfg.get("gotify", "TITLE", fallback="Cleaner qBittorrent")
 
-# Catalog
-CATALOG_FILE   = cfg.get("catalog", "FILE", fallback="/app/data/catalog.json")
-
 # Sonarr (pour builder uniquement)
 SONARR_URL = cfg.get("sonarr", "URL", fallback="http://sonarr:8989").rstrip("/")
 SONARR_KEY = cfg.get("sonarr", "API_KEY", fallback="")
@@ -45,5 +43,29 @@ SONARR_KEY = cfg.get("sonarr", "API_KEY", fallback="")
 RADARR_URL = cfg.get("radarr", "URL", fallback="http://radarr:7878").rstrip("/")
 RADARR_KEY = cfg.get("radarr", "API_KEY", fallback="")
 
-# Misc
-DRY_RUN = getbool("general", "DRY_RUN", False)
+# DATABASE: priorité env DATABASE_URL, sinon sqlite file in data/
+DEFAULT_SQLITE = "sqlite:///" + os.path.join(ROOT_DIR, "data", "app.db")
+DATABASE_URL = os.getenv("DATABASE_URL", cfg.get("database", "URL", fallback=DEFAULT_SQLITE))
+
+# Flask-SQLAlchemy settings
+SQLALCHEMY_DATABASE_URI = DATABASE_URL
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SQLALCHEMY_ECHO = getbool("database", "ECHO", False)
+
+def configure_app(app, config_filename: str | None = None):
+    """
+    Applique la config sur l'objet Flask. Si config_filename fourni,
+    on peut l'utiliser pour surcharger (optionnel).
+    """
+    # valeurs depuis ce module
+    app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
+    app.config["SQLALCHEMY_ECHO"] = SQLALCHEMY_ECHO
+
+    # logging / autres variables utiles
+    app.config["SERVER_HOST"] = SERVER_HOST
+    app.config["SERVER_PORT"] = SERVER_PORT
+
+    # possibilité de charger override depuis un fichier .cfg passé
+    if config_filename:
+        app.config.from_pyfile(config_filename, silent=True)

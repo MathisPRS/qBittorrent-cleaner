@@ -1,3 +1,19 @@
+# Arborescance du Projet :
+
+- adapters/ --> methode (API) concernant les services externe au projet (Gotify, qBittorrent, etc)
+- api/ --> s'occupe des routes et redirige vers les controllers
+- controllers/ --> normalise les données et redirige vers les Services et Repositories
+- models/ --> Définis la structure de la base et des items 
+- repositories/ --> passe les requetes a la Base
+- services/ --> Regroupement de la logique metier
+
+
+# Setup son projet
+
+## Requirements
+
+- docker installé
+
 Creer un configlocal.cfg
 
 ```
@@ -38,6 +54,15 @@ PRIORITY =
 TITLE = 
 ```
 
-Déploiment du projet : 
+# Déploiment du projet : 
 
-gdocker compose up -d --build
+## Docker
+
+Le docker s'occupe de creer un container à partir du Dockerfile. L'image va normalement installer python3 et les lib nécessaire au projet
+
+Lancer la stack :
+```
+cd docker
+docker compose up -d --build
+```
+
