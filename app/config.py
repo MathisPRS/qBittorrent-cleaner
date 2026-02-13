@@ -24,9 +24,9 @@ WERK_LEVEL  = (cfg.get("logging", "WERKZEUG_LEVEL", fallback="WARNING") or "WARN
 LOG_LEVEL   = (cfg.get("general", "LOG_LEVEL", fallback="INFO") or "INFO").upper()
 
 # qBittorrent
-QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrent:8080").rstrip("/")
-QBIT_USER = cfg.get("qbittorrent", "USER", fallback="admin")
-QBIT_PASS = cfg.get("qbittorrent", "PASS", fallback="adminadmin")
+QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrrent8080").rstrip("/")
+QBIT_USER = cfg.get("qbittorrent", "USER" )
+QBIT_PASS = cfg.get("qbittorrent", "PASS")
 
 # Gotify
 GOTIFY_ENABLED = getbool("gotify", "ENABLED", False)
