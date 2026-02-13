@@ -9,7 +9,6 @@ class Movie(db.Model):
     radarr_id = db.Column(db.String(64), unique=True)
     title = db.Column(db.String(512))
     latest_torrent_id = db.Column(db.Integer, db.ForeignKey("torrents.id", ondelete="SET NULL"))
-    cross_seed_ids = db.Column(JSON, default=list)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     latest_torrent = db.relationship("Torrents")

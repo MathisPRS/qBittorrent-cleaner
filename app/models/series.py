@@ -9,15 +9,10 @@ class Series(db.Model):
 
     sonarr_id = db.Column(db.String(64))     # id de la série
     title = db.Column(db.String(512))
-
     season = db.Column(db.Integer, nullable=False)
     episode = db.Column(db.Integer, nullable=False)
-
     latest_torrent_id = db.Column(db.Integer, db.ForeignKey("torrents.id", ondelete="SET NULL"))
-    cross_seed_ids = db.Column(JSON, default=list)
-
     is_pack = db.Column(db.Boolean, default=False)  # provient d’un season pack ?
-
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     latest_torrent = db.relationship("Torrents")
