@@ -133,10 +133,6 @@ class QbittorrentAdapter:
         url = urljoin(self.base, "api/v2/torrents/delete")
         data = {"hashes": "|".join(hashes), "deleteFiles": "true" if delete_files else "false"}
 
-        # Log exact request payload
-        self.logger.debug("[qBittorrent] delete_torrents: POST %s", url)
-        self.logger.debug("[qBittorrent] delete_torrents: request data=%s", data)
-
         # Perform delete
         try:
             r = self.session.post(url, data=data, timeout=REQ_TIMEOUT)

@@ -7,8 +7,8 @@ URL = "http://127.0.0.1:8124/api/radarr"  # adapte si besoin
 
 payload = {
   "movie": {
-    "id": 596,
-    "title": "Taken 5",
+    "id": 45,
+    "title": "Mathis Film 1",
     "year": 2012,
     "releaseDate": "2013-02-06",
     "folderPath": "/nas-omv/Films/Taken 3 (2012)",
@@ -36,7 +36,7 @@ payload = {
     "quality": "Bluray-1080p",
     "qualityVersion": 1,
     "releaseGroup": "MM91",
-    "sceneName": "Taken 2 (2012) Version Non Censurée MULTi VFF 1080p 10bit HDLight BluRay x265 AC3 5.1-MM91",
+    "sceneName": "Mathis Film 1 (2012) Version Non Censurée MULTi VFF 1080p 10bit HDLight BluRay x265 AC3 5.1-MM91",
     "indexerFlags": "0",
     "size": 2634071875,
     "dateAdded": "2026-02-13T11:40:00.0875003Z",
@@ -57,7 +57,7 @@ payload = {
   "isUpgrade": False,
   "downloadClient": "qBittorrent (films)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "fb631f6m6a0t33h672726706d5049ba881926ba",
+  "downloadId": "685b69efd09c394f983b8c3be63c1d0d07e23ebç",
   "customFormatInfo": {
     "customFormats": [
       {"id": 13, "name": "1080p"},

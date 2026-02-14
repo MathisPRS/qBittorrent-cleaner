@@ -34,6 +34,8 @@ GOTIFY_URL     = (cfg.get("gotify", "URL", fallback="")).rstrip("/")
 GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN", fallback="")
 GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY", fallback="5"))
 GOTIFY_TITLE   = cfg.get("gotify", "TITLE", fallback="Cleaner qBittorrent")
+GOTIFY_VERIFY_SSL = getbool("gotify", "VERIFY_SSL", True)
+
 
 # Sonarr (pour builder uniquement)
 SONARR_URL = cfg.get("sonarr", "URL", fallback="http://sonarr:8989").rstrip("/")
