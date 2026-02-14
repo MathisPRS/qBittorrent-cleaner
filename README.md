@@ -67,8 +67,8 @@ TITLE =
 Le docker s'occupe de creer un container à partir du Dockerfile. L'image va normalement installer python3 et les lib nécessaire au projet
 
 Lancer la stack :
+- Se mettre a la racine du projet puis effectuer les commandes suivantes
 ```
-cd docker
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
