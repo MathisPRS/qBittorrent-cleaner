@@ -3,3 +3,4 @@ configlocal.cfg
 /logs
 **/__pycache__/
 /data
+.vscode

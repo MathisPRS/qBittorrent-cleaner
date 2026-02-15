@@ -1,127 +1,209 @@
 # adapters/qbitadapter.py
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict, Tuple
 from urllib.parse import urljoin
+import time
 import requests
+from requests.exceptions import RequestException
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from app.logger import get_logger
+from ..config import QBIT_HOST
+
+REQ_TIMEOUT = 12
+
+logger = get_logger(__name__)
 
 
 class QbittorrentAdapter:
    
     def __init__(
         self,
-        host: str,
-        user: str,
-        password: str,
-        logger=None,
+        host: str = QBIT_HOST,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        logger_obj=None,
         dry_run: bool = False,
     ):
-        self.base = host.rstrip("/") + "/"
+        self.base = (host or "").rstrip("/") + "/"
         self.user = user
         self.password = password
-        # si aucun logger fourni, on récupère un logger configuré
-        self.logger = logger or get_logger(__name__)
+        # use provided logger or module logger
+        self.logger = logger_obj or logger
         self.dry_run = dry_run
+
         self.session = requests.Session()
+        retry = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=(429, 502, 503, 504),
+            allowed_methods=frozenset(['GET', 'POST', 'PUT', 'DELETE', 'HEAD'])
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
         self._logged = False
 
     def login(self) -> bool:
         if self._logged:
-            self.logger.debug("login: déjà connecté, skip")
+            self.logger.debug("[qBittorrent] login: already logged")
+            return True
+        if self.dry_run:
+            self.logger.debug("[qBittorrent] [DRY_RUN] login skipped")
+            self._logged = True
             return True
 
         url = urljoin(self.base, "api/v2/auth/login")
-        self.logger.debug("login: POST %s", url)
+        self.logger.debug("[qBittorrent] login: POST %s", url)
         try:
-            response = self.session.post(
-                url,
-                data={"username": self.user, "password": self.password},
-                timeout=10,
+            r = self.session.post(
+                url, data={"username": self.user, "password": self.password}, timeout=REQ_TIMEOUT
             )
-            response.raise_for_status()
-        except Exception:
-            self.logger.exception("login: échec de la requête vers qBittorrent")
+            # log minimal preview but never log credentials
+            self.logger.debug("[qBittorrent] login: status=%s body_preview=%s", r.status_code, (r.text or "")[:1000])
+            r.raise_for_status()
+        except RequestException as e:
+            self.logger.exception("[qBittorrent] login: request failed")
             raise
 
-        text = (response.text or "").strip()
-        if text != "Ok.":
-            self.logger.error("login: réponse inattendue: %r", text)
-            raise RuntimeError("qBittorrent login failed")
-
+        # qB returns "Ok." usually; be tolerant
+        body = (r.text or "").strip()
+        if body not in ("Ok.", "OK", "ok", "Ok"):
+            raise RuntimeError(f"qBittorrent login failed: {body!r} (status={r.status_code})")
         self._logged = True
-        self.logger.info("qBittorrent login success")
+        self.logger.info("[qBittorrent] qBittorrent login success")
         return True
 
-    def ensure_logged(self) -> None:
-        if not self._logged:
-            self.login()
-
-    def get_torrents(self) -> List[Any]:
-        
-        self.ensure_logged()
-        url = urljoin(self.base, "api/v2/torrents/info")
-        self.logger.debug("get_torrents: GET %s", url)
-        try:
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
-            torrents = response.json()
-        except Exception:
-            self.logger.exception("get_torrents: impossible de récupérer les torrents")
-            raise
-
-        self.logger.debug("get_torrents: récupéré %d torrents", len(torrents) if hasattr(torrents, "__len__") else -1)
-        return torrents
-
-    def get_torrent_by_hash(self, hash: str) -> Optional[dict]:
-        if not hash:
-            self.logger.debug("get_torrent_by_hash: hash vide fourni")
-            return None
-
-        try:
-            torrents = self.get_torrents()
-        except Exception:
-            self.logger.debug("get_torrent_by_hash: échec lors de la récupération des torrents")
-            raise
-
-        target = None
-        for torrent in torrents:
-            th = (torrent.get("hash") or "").lower()
-            if th == hash.lower():
-                target = torrent
-                break
-
-        if target:
-            self.logger.debug("get_torrent_by_hash: torrent trouvé pour hash=%s", hash)
-        else:
-            self.logger.debug("get_torrent_by_hash: aucun torrent pour hash=%s", hash)
-
-        return target
-
-    def delete_torrents(self, hashes, delete_files: bool = False) -> str:
-        # Normalisation
-        if isinstance(hashes, str):
-            hashes = [hashes]
-        hashes = [h for h in hashes if h]
-
+    def info_map(self, hashes: List[str]) -> Dict[str, dict]:
         if not hashes:
-            self.logger.error("delete_torrents: aucune hash fournie")
-            raise ValueError("No hashes provided for deletion")
+            return {}
+        hashes_norm = [ (h or "").lower().strip() for h in hashes if h ]
+        if not hashes_norm:
+            return {}
 
         if self.dry_run:
-            self.logger.info("[DRY_RUN] Would delete torrents: %s (delete_files=%s)", hashes, delete_files)
-            return "DRY_RUN"
+            out = {}
+            for h in hashes_norm:
+                out[h] = {"name": f"torrent_{h[:8]}...", "hash": h}
+            return out
 
-        self.ensure_logged()
-
-        url = urljoin(self.base, "api/v2/torrents/delete")
-        data = {"hashes": ",".join(hashes), "deleteFiles": "true" if delete_files else "false"}
-        self.logger.debug("delete_torrents: POST %s data=%s", url, {"hashes_count": len(hashes), "deleteFiles": delete_files})
-
+        params = {"hashes": "|".join(hashes_norm)}
+        url = urljoin(self.base, "api/v2/torrents/info")
         try:
-            response = self.session.post(url, data=data, timeout=10)
-            response.raise_for_status()
+            r = self.session.get(url, params=params, timeout=REQ_TIMEOUT)
+            self.logger.debug("[qBittorrent] info_map: GET %s params=%s -> status=%s", url, params, r.status_code)
+            r.raise_for_status()
+            out = {}
+            for t in r.json():
+                out[(t.get("hash") or "").lower()] = t
+            return out
         except Exception:
-            self.logger.exception("delete_torrents: échec suppression torrents %s", hashes)
+            self.logger.exception("[qBittorrent] info_map: failed to fetch torrents info")
             raise
 
-        self.logger.info("Deleted torrents: %s (delete_files=%s)", hashes, delete_files)
-        return response.text
+    def delete_torrents(self, hashes, delete_files: bool = True, max_retry: int = 2) -> Dict[str, Any]:
+        if isinstance(hashes, str):
+            hashes = [hashes]
+        hashes = [ (h or "").lower().strip() for h in hashes if h ]
+        if not hashes:
+            return {"error": "no_hashes", "deleted": [], "failed": [], "absent": [], "request": None, "response": None}
+
+        # dry-run simulation
+        if self.dry_run:
+            deleted = [(h, f"torrent_{h[:8]}...") for h in hashes]
+            req = {"url": None, "data": {"hashes": "|".join(hashes), "deleteFiles": str(delete_files)}}
+            resp = {"status_code": None, "text": "[DRY_RUN]", "json": None, "headers": None}
+            # Log simulated behavior
+            self.logger.info("[qBittorrent] [DRY_RUN] delete_torrents request=%s response=%s", req, resp)
+            return {"deleted": deleted, "failed": [], "absent": [], "request": req, "response": resp}
+
+        # ensure logged
+        try:
+            self.login()
+        except Exception as e:
+            self.logger.exception("[qBittorrent] delete_torrents: login failed")
+            return {"error": "login_failed", "exception": str(e), "deleted": [], "failed": [], "absent": [], "request": None, "response": None}
+
+        # snapshot before (get names)
+        try:
+            present_before = self.info_map(hashes)
+        except Exception:
+            present_before = {}
+
+        url = urljoin(self.base, "api/v2/torrents/delete")
+        data = {"hashes": "|".join(hashes), "deleteFiles": "true" if delete_files else "false"}
+
+        # Perform delete
+        try:
+            r = self.session.post(url, data=data, timeout=REQ_TIMEOUT)
+            resp_text = r.text or ""
+            parsed = None
+            try:
+                parsed = r.json()
+            except Exception:
+                parsed = None
+
+            self.logger.debug("[qBittorrent] delete_torrents: response status=%s", r.status_code)
+            self.logger.debug("[qBittorrent] delete_torrents: response headers=%s", dict(r.headers))
+            # show parsed json if available else text preview
+            self.logger.debug("[qBittorrent] delete_torrents: response body_preview=%s", (parsed if parsed is not None else resp_text[:2000]))
+
+            # small sleep to let qB update its state
+            time.sleep(0.6)
+
+            try:
+                present_after = self.info_map(hashes)
+            except Exception:
+                present_after = {}
+
+            deleted: List[Tuple[str, str]] = []
+            failed: List[Tuple[str, str]] = []
+            absent: List[str] = []
+
+            for h in hashes:
+                name = (present_before.get(h, {}) or {}).get("name", f"<{h[:12]}>")
+                if h not in present_before:
+                    absent.append(h)
+                elif h not in present_after:
+                    deleted.append((h, name))
+                else:
+                    failed.append((h, name))
+
+            req = {"url": url, "data": data}
+            resp = {"status_code": r.status_code, "text": resp_text, "json": parsed, "headers": dict(r.headers)}
+
+            # More expressive logging
+            if deleted:
+                self.logger.info("[qBittorrent] [bulk] deleted: %s", [n for _, n in deleted])
+            if failed:
+                self.logger.warning("[qBittorrent] [bulk] failed: %s", [n for _, n in failed])
+            if absent:
+                self.logger.info("[qBittorrent] [bulk] absent: %d", len(absent))
+
+            result = {
+                "deleted": deleted,
+                "failed": failed,
+                "absent": absent,
+                "request": req,
+                "response": resp
+            }
+            return result
+
+        except RequestException as e:
+            resp = getattr(e, "response", None)
+            status = getattr(resp, "status_code", None)
+            text = getattr(resp, "text", None)
+            self.logger.exception("[qBittorrent] delete_torrents: request failed")
+            return {
+                "error": str(e),
+                "status_code": status,
+                "text": text,
+                "deleted": [],
+                "failed": [],
+                "absent": [],
+                "request": {"url": url, "data": data},
+                "response": {"status_code": status, "text": text, "json": None, "headers": None}
+            }
+        except Exception as e:
+            self.logger.exception("[qBittorrent] delete_torrents: unexpected exception")
+            return {"error": str(e), "deleted": [], "failed": [], "absent": [], "request": {"url": url, "data": data}, "response": None}
