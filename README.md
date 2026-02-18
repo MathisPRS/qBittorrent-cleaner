@@ -79,3 +79,10 @@ TO DO :
 - Parse Torrents in qbittorrent and leak cross-seed file to parents
 - 
 
+Sonarr :
+- Detecter quand c'est :
+        - un pack qui update un/des episodes
+        - un episode qui update un pack
+        - un pack qui update un pack
+        xœ
+
