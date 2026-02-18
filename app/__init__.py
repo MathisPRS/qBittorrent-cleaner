@@ -4,13 +4,10 @@ from flask import Flask
 from .config import configure_app  # on va créer cette helper pour charger config
 from .extensions import db, migrate
 from .api.routes import bp as api_bp
-# import models so they are registered with SQLAlchemy
-# from .models import movies, series, torrents  # optional, imports done in models/__init__.py
 
 def create_app(config_filename: str | None = None):
     app = Flask(__name__, instance_relative_config=False)
 
-    # charge config (ENV or fichier)
     configure_app(app, config_filename)
 
     def _ensure_sqlite_dir(app):
@@ -34,7 +31,6 @@ def create_app(config_filename: str | None = None):
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    # simple root
     @app.get("/")
     def root():
         return {"ok": True, "msg": "webhook-cleaner ready. POST /sonarr, /radarr."}

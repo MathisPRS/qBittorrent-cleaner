@@ -60,6 +60,7 @@ def radarr_webhook(request, app):
     dto = {
         "radarr_id": str(radarr_id),
         "title": title,
+        "image": movie.get("images", [{}])[0].get("remoteUrl"),
         "torrent": {
             "hash": download_id,
             "title": movie_file.get("relativePath"),

@@ -76,41 +76,24 @@ class TorrentsRepo:
                 self.logger.exception("[BBDD] rollback failed after delete error")
             return 0
 
-    def find_hashes_to_delete(self, torrent_id: int) -> List[str]:
-        if not torrent_id:
-            return []
+    def find_hashes_to_delete(self, parent_torrent_id: int) -> List[str]:
+        parent_torrent = self.get_by_id(parent_torrent_id)
+        hashes_to_delete = []
+        hashes_to_delete.append(parent_torrent.hash.strip().lower())
+        try:
+            child_torrents = Torrents.query.filter_by(
+                cross_seed_id=parent_torrent_id
+            ).all()
+        except Exception:
+            self.logger.exception(
+                "[BBDD] Erreur lors de la recherche des cross-seeds pour torrent_id=%s",
+                parent_torrent_id
+            )
+            return hashes_to_delete
+       
+        for child in child_torrents:
+            if child.hash:
+                hashes_to_delete.append(child.hash.strip().lower())
 
-        root = self.get_by_id(torrent_id)
-        if not root:
-            return []
-
-        hashes: Set[str] = set()
-        stack = [root]
-
-        while stack:
-            node = stack.pop()
-            if not node:
-                continue
-
-            # add node hash if present
-            h = _normalize_hash(getattr(node, "hash", None))
-            if h:
-                hashes.add(h)
-
-            # children may be a list (normal), or (unexpectedly) a single Torrents instance
-            children = getattr(node, "cross_seeds", None)
-            if not children:
-                continue
-
-            # If it's an iterable of children (list/tuple etc.) iterate, otherwise push single child
-            # Exclude strings by checking isinstance(children, (str, bytes))
-            if isinstance(children, Iterable) and not isinstance(children, (str, bytes)):
-                # Some ORMs return instrumented lists that are Iterable
-                for c in children:
-                    if c:
-                        stack.append(c)
-            else:
-                # Single child case: push it
-                stack.append(children)
-
-        return list(hashes)
+        logger.info("[BBDD] Found %s cross-seed(s) for torrent_id=%s",len(hashes_to_delete), parent_torrent_id)
+        return hashes_to_delete
