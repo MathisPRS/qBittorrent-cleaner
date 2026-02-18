@@ -102,108 +102,83 @@ class QbittorrentAdapter:
             raise
 
     def delete_torrents(self, hashes, delete_files: bool = True, max_retry: int = 2) -> Dict[str, Any]:
+        
         if isinstance(hashes, str):
             hashes = [hashes]
-        hashes = [ (h or "").lower().strip() for h in hashes if h ]
         if not hashes:
-            return {"error": "no_hashes", "deleted": [], "failed": [], "absent": [], "request": None, "response": None}
+            return {"error": None, "deleted": [], "failed": [], "absent": []}
 
-        # dry-run simulation
-        if self.dry_run:
-            deleted = [(h, f"torrent_{h[:8]}...") for h in hashes]
-            req = {"url": None, "data": {"hashes": "|".join(hashes), "deleteFiles": str(delete_files)}}
-            resp = {"status_code": None, "text": "[DRY_RUN]", "json": None, "headers": None}
-            # Log simulated behavior
-            self.logger.info("[qBittorrent] [DRY_RUN] delete_torrents request=%s response=%s", req, resp)
-            return {"deleted": deleted, "failed": [], "absent": [], "request": req, "response": resp}
-
-        # ensure logged
         try:
             self.login()
         except Exception as e:
             self.logger.exception("[qBittorrent] delete_torrents: login failed")
-            return {"error": "login_failed", "exception": str(e), "deleted": [], "failed": [], "absent": [], "request": None, "response": None}
+            return {"error": "login_failed", "deleted": [], "failed": [], "absent": []}
 
-        # snapshot before (get names)
-        try:
-            present_before = self.info_map(hashes)
-        except Exception:
-            present_before = {}
+        deleted = []
+        failed = []
+        absent = []
 
         url = urljoin(self.base, "api/v2/torrents/delete")
-        data = {"hashes": "|".join(hashes), "deleteFiles": "true" if delete_files else "false"}
 
-        # Perform delete
-        try:
-            r = self.session.post(url, data=data, timeout=REQ_TIMEOUT)
-            resp_text = r.text or ""
-            parsed = None
+        for h in hashes:
             try:
-                parsed = r.json()
-            except Exception:
-                parsed = None
+                try:
+                    info_before = self.info_map([h])
+                except Exception:
+                    info_before = {}
 
-            self.logger.debug("[qBittorrent] delete_torrents: response status=%s", r.status_code)
-            self.logger.debug("[qBittorrent] delete_torrents: response headers=%s", dict(r.headers))
-            # show parsed json if available else text preview
-            self.logger.debug("[qBittorrent] delete_torrents: response body_preview=%s", (parsed if parsed is not None else resp_text[:2000]))
-
-            # small sleep to let qB update its state
-            time.sleep(0.6)
-
-            try:
-                present_after = self.info_map(hashes)
-            except Exception:
-                present_after = {}
-
-            deleted: List[Tuple[str, str]] = []
-            failed: List[Tuple[str, str]] = []
-            absent: List[str] = []
-
-            for h in hashes:
-                name = (present_before.get(h, {}) or {}).get("name", f"<{h[:12]}>")
-                if h not in present_before:
+                if not info_before or (h not in info_before):
+                    # not found on qB -> mark absent, skip delete call
                     absent.append(h)
-                elif h not in present_after:
-                    deleted.append((h, name))
-                else:
+                    self.logger.info("[qBittorrent] absent (not present) hash=%s", h)
+                    continue
+
+                # present -> attempt to delete this single hash
+                data = {"hashes": h, "deleteFiles": "true" if delete_files else "false"}
+                try:
+                    r = self.session.post(url, data=data, timeout=REQ_TIMEOUT)
+                    # we don't need body; only status matters in combination with info_map
+                except RequestException as e:
+                    # network error for this hash -> mark failed and continue
+                    self.logger.exception("[qBittorrent] network error when deleting hash=%s: %s", h, e)
+                    name = (info_before.get(h) or {}).get("name", None)
                     failed.append((h, name))
+                    continue
+                
+                # check after deletion
+                try:
+                    info_after = self.info_map([h])
+                except Exception:
+                    info_after = {}
 
-            req = {"url": url, "data": data}
-            resp = {"status_code": r.status_code, "text": resp_text, "json": parsed, "headers": dict(r.headers)}
+                name_before = (info_before.get(h) or {}).get("name", f"<{h[:12]}>")
 
-            # More expressive logging
-            if deleted:
-                self.logger.info("[qBittorrent] [bulk] deleted: %s", [n for _, n in deleted])
-            if failed:
-                self.logger.warning("[qBittorrent] [bulk] failed: %s", [n for _, n in failed])
-            if absent:
-                self.logger.info("[qBittorrent] [bulk] absent: %d", len(absent))
+                if not info_after or (h not in info_after):
+                    # successfully removed from qB
+                    deleted.append((h, name_before))
+                    self.logger.info("[qBittorrent] deleted hash=%s name=%s", h, name_before)
+                else:
+                    # still present -> deletion failed for this hash
+                    failed.append((h, name_before))
+                    self.logger.warning("[qBittorrent] failed to delete hash=%s name=%s", h, name_before)
 
-            result = {
-                "deleted": deleted,
-                "failed": failed,
-                "absent": absent,
-                "request": req,
-                "response": resp
-            }
-            return result
+            except Exception as e:
+                # unexpected per-hash exception -> mark failed
+                self.logger.exception("[qBittorrent] unexpected error handling hash=%s: %s", h, e)
+                # try to get a name if possible (best-effort)
+                try:
+                    name_try = (info_before.get(h) or {}).get("name", None)
+                except Exception:
+                    name_try = None
+                failed.append((h, name_try))
 
-        except RequestException as e:
-            resp = getattr(e, "response", None)
-            status = getattr(resp, "status_code", None)
-            text = getattr(resp, "text", None)
-            self.logger.exception("[qBittorrent] delete_torrents: request failed")
-            return {
-                "error": str(e),
-                "status_code": status,
-                "text": text,
-                "deleted": [],
-                "failed": [],
-                "absent": [],
-                "request": {"url": url, "data": data},
-                "response": {"status_code": status, "text": text, "json": None, "headers": None}
-            }
-        except Exception as e:
-            self.logger.exception("[qBittorrent] delete_torrents: unexpected exception")
-            return {"error": str(e), "deleted": [], "failed": [], "absent": [], "request": {"url": url, "data": data}, "response": None}
+        # final logs (listes explicites)
+        if deleted:
+            self.logger.info("[qBittorrent] deleted hashes: %s", ", ".join([h for h, _ in deleted]))
+        if absent:
+            self.logger.info("[qBittorrent] absent hashes: %s", ", ".join(absent))
+        if failed:
+            self.logger.warning("[qBittorrent] failed hashes: %s", ", ".join([h for h, _ in failed]))
+
+        return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
+
