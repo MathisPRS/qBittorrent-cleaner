@@ -172,13 +172,5 @@ class QbittorrentAdapter:
                     name_try = None
                 failed.append((h, name_try))
 
-        # final logs (listes explicites)
-        if deleted:
-            self.logger.info("[qBittorrent] deleted hashes: %s", ", ".join([h for h, _ in deleted]))
-        if absent:
-            self.logger.info("[qBittorrent] absent hashes: %s", ", ".join(absent))
-        if failed:
-            self.logger.warning("[qBittorrent] failed hashes: %s", ", ".join([h for h, _ in failed]))
-
         return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
 

@@ -1,10 +1,10 @@
 # adapters/gotify_adapter.py
 from typing import List, Optional
-import time
-import json
 import requests
-from requests.exceptions import RequestException, ConnectionError, Timeout
-import urllib3
+import mimetypes
+import logging
+from urllib.parse import urlsplit, unquote
+from requests.exceptions import RequestException
 from app.logger import get_logger
 from .. import config as app_config
 
@@ -13,80 +13,137 @@ logger = get_logger(__name__)
 
 class GotifyAdapter:
     def __init__(self):
-        self.enabled = getattr(app_config, "GOTIFY_ENABLED", False)
-        self.url = getattr(app_config, "GOTIFY_URL", "") or ""
-        if self.url:
-            self.url = self.url.rstrip("/")
+        self.enabled = bool(getattr(app_config, "GOTIFY_ENABLED", False))
+        self.base_url = (getattr(app_config, "GOTIFY_URL", "") or "").rstrip("/")
         self.token = getattr(app_config, "GOTIFY_TOKEN", "")
-        self.priority = getattr(app_config, "GOTIFY_PRIO", 5)
-        self.verify_ssl = getattr(app_config, "GOTIFY_VERIFY_SSL", True)
-        self.title_default = getattr(app_config, "GOTIFY_TITLE", "Cleaner qBittorrent")
-        self.dry_run = getattr(app_config, "DRY_RUN", False)
+        self.priority = int(getattr(app_config, "GOTIFY_PRIO", 5))
+        self.verify_ssl = bool(getattr(app_config, "GOTIFY_VERIFY_SSL", True))
+        self.default_title = getattr(app_config, "GOTIFY_TITLE", "Cleaner qBittorrent")
         self.session = requests.Session()
-        if not self.verify_ssl:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        self._max_retries = 2
-        self._backoff = 0.3
 
-    def send(self, header: str, lines: Optional[List[str]] = None) -> dict:
-        if not self.enabled or not self.url or not self.token:
+        # small constants
+        self._max_image_bytes = int(getattr(app_config, "GOTIFY_MAX_IMAGE_BYTES", 8 * 1024 * 1024))
+        self._user_agent = getattr(app_config, "GOTIFY_USER_AGENT", "gotify-client/1.0")
+
+    def _infer_filename(self, url: str, content_type: str | None) -> str:
+        # try to get name from URL path
+        try:
+            path = unquote(urlsplit(url).path or "")
+            candidate = path.rsplit("/", 1)[-1]
+            if candidate and "." in candidate:
+                return candidate
+        except Exception:
+            pass
+        # else try from content_type
+        if content_type and "/" in content_type:
+            ext = mimetypes.guess_extension(content_type.split(";")[0].strip())
+            if ext:
+                return f"image{ext}"
+        # fallback
+        return "image.jpg"
+
+    def send(self, title: str, lines: Optional[List[str]] = None, image_url: Optional[str] = None) -> dict:
+        """
+        Send message to Gotify. If image_url provided, try to fetch and send as 'attachment'.
+        Returns a dict with ok/status_code and helpful debug info.
+        """
+        if not (self.enabled and self.base_url and self.token):
             logger.debug("[Gotify] disabled or not configured; skipping")
             return {"ok": False, "error": "disabled_or_not_configured"}
 
-        # Build full message (join lines with newline). Keep trimming empty lines.
-        message_lines = [str(l).strip() for l in (lines or []) if l and str(l).strip()]
-        body_msg = "\n".join(message_lines)
+        post_url = f"{self.base_url}/message"
+        message_text = "\n".join([l for l in (lines or []) if l and l.strip()]).strip()
+        payload = {"title": title or self.default_title, "message": message_text, "priority": self.priority}
 
-        payload = {"title": header or self.title_default, "message": body_msg, "priority": self.priority}
-        url = f"{self.url}/message"
-
-        # dry-run
-        if self.dry_run:
-            logger.info("[Gotify] [DRY_RUN] title=%s\nmessage=%s", payload["title"], payload["message"])
-            return {"ok": True, "status_code": None, "dry_run": True, "payload": payload}
-
-        last_exc = None
-        for attempt in range(1, self._max_retries + 1):
+        # If no image requested -> simple JSON POST
+        if not image_url:
             try:
-                logger.debug("[Gotify] POST %s params=***** payload_preview=%s (attempt %d)", url,
-                             {"title": payload["title"], "message_preview": (payload["message"] or "")[:400]}, attempt)
-                r = self.session.post(url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
-
-                status = getattr(r, "status_code", None)
-                text_preview = (r.text or "")[:1000]
-
-                if status and 200 <= status < 300:
-                    logger.info("[Gotify] sent: title=%s status=%s", payload["title"], status)
-                    return {"ok": True, "status_code": status, "payload": payload}
-                else:
-                    # non 2xx -> no retry (server returned error)
-                    logger.warning("[Gotify] send returned non-2xx status=%s text_preview=%s", status, text_preview)
-                    return {"ok": False, "status_code": status, "error": f"HTTP {status}", "response_text_preview": text_preview, "payload": payload}
-
-            except (ConnectionError, Timeout) as e:
-                last_exc = e
-                logger.warning("[Gotify] network error on attempt %d/%d: %s", attempt, self._max_retries, e)
-                if attempt < self._max_retries:
-                    time.sleep(self._backoff * attempt)
-                    continue
-                logger.warning("[Gotify] exhausted retries; last error: %s", e)
-                return {"ok": False, "status_code": None, "error": str(e), "payload": payload}
+                r = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                r.raise_for_status()
+                logger.info("[Gotify] sent JSON: title=%s status=%s", payload["title"], r.status_code)
+                return {"ok": True, "status_code": r.status_code}
             except RequestException as e:
-                resp = getattr(e, "response", None)
-                status = getattr(resp, "status_code", None)
-                text = getattr(resp, "text", None)
-                logger.warning("[Gotify] request exception: status=%s text_preview=%s exc=%s", status, (text or "")[:300], e)
-                return {"ok": False, "status_code": status, "error": str(e), "response_text_preview": (text or "")[:300], "payload": payload}
-            except Exception as e:
-                logger.exception("[Gotify] unexpected error sending notification")
-                return {"ok": False, "error": str(e), "payload": payload}
+                logger.warning("[Gotify] JSON send failed: %s", e)
+                return {"ok": False, "error": str(e)}
 
-        # fallback
-        if last_exc:
-            return {"ok": False, "status_code": None, "error": str(last_exc), "payload": payload}
-        return {"ok": False, "error": "unknown", "payload": payload}
+        # Try to fetch image with a User-Agent (TMDB sometimes bloque les requêtes sans UA)
+        try:
+            headers = {"User-Agent": self._user_agent, "Accept": "image/*,*/*;q=0.8"}
+            r_img = self.session.get(image_url, headers=headers, stream=True, timeout=10, verify=self.verify_ssl)
+            r_img.raise_for_status()
+
+            content_type = r_img.headers.get("Content-Type", "").split(";")[0].strip().lower()
+            content_length = r_img.headers.get("Content-Length")
+            logger.debug("[Gotify] fetched image url=%s status=%s type=%s len_header=%s",
+                         image_url, r_img.status_code, content_type, content_length)
+
+            # verify content-type looks like image/*
+            if not content_type.startswith("image/"):
+                # log and fallback to send URL in message (useful to debug)
+                logger.warning("[Gotify] fetched resource is not image/* (Content-Type=%s). Fallback to sending URL.", content_type)
+                payload["message"] = (message_text + "\nImage: " + image_url).strip()
+                r = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                r.raise_for_status()
+                return {"ok": True, "status_code": r.status_code, "warning": "fetched_not_image_sent_url", "fetched_content_type": content_type}
+
+            # size checks (header first, then actual bytes)
+            if content_length:
+                try:
+                    if int(content_length) > self._max_image_bytes:
+                        logger.warning("[Gotify] image too large (header %s) -> sending URL instead", content_length)
+                        payload["message"] = (message_text + "\nImage: " + image_url).strip()
+                        r = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                        r.raise_for_status()
+                        return {"ok": True, "status_code": r.status_code, "warning": "image_too_large_sent_url"}
+                except ValueError:
+                    pass
+
+            img_bytes = r_img.content
+            if len(img_bytes) > self._max_image_bytes:
+                logger.warning("[Gotify] image bytes %d > max %d -> sending URL instead", len(img_bytes), self._max_image_bytes)
+                payload["message"] = (message_text + "\nImage: " + image_url).strip()
+                r = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                r.raise_for_status()
+                return {"ok": True, "status_code": r.status_code, "warning": "image_too_large_sent_url"}
+
+            filename = self._infer_filename(image_url, content_type)
+
+        except RequestException as e:
+            logger.warning("[Gotify] failed to fetch image '%s': %s -> sending URL instead", image_url, e)
+            payload["message"] = (message_text + "\nImage: " + image_url).strip()
+            try:
+                r = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                r.raise_for_status()
+                return {"ok": True, "status_code": r.status_code, "warning": "image_fetch_failed_sent_url"}
+            except RequestException as e2:
+                logger.warning("[Gotify] fallback JSON send also failed: %s", e2)
+                return {"ok": False, "error": f"{e} ; fallback: {e2}"}
+
+        # Now upload multipart/form-data with attachment
+        files = {"attachment": (filename, img_bytes, content_type)}
+        data = {"title": payload["title"], "message": payload["message"], "priority": str(payload["priority"])}
+
+        try:
+            r = self.session.post(post_url, params={"token": self.token}, data=data, files=files, timeout=20, verify=self.verify_ssl)
+            status = getattr(r, "status_code", None)
+            text_preview = (r.text or "")[:1000]
+            logger.debug("[Gotify] multipart response status=%s preview=%s", status, text_preview)
+            if status and 200 <= status < 300:
+                logger.info("[Gotify] sent with attachment: title=%s status=%s", payload["title"], status)
+                return {"ok": True, "status_code": status}
+            else:
+                logger.warning("[Gotify] attachment upload returned non-2xx status=%s -> fallback to URL", status)
+                payload["message"] = (message_text + "\nImage: " + image_url).strip()
+                r2 = self.session.post(post_url, params={"token": self.token}, json=payload, timeout=8, verify=self.verify_ssl)
+                r2.raise_for_status()
+                return {"ok": True, "status_code": r2.status_code, "warning": "attachment_failed_sent_url", "attach_response_preview": text_preview}
+        except RequestException as e:
+            logger.warning("[Gotify] multipart upload failed: %s", e)
+            return {"ok": False, "error": str(e)}
+
 
 _default_gotify = GotifyAdapter()
 
-def notify_gotify(header: str, lines: Optional[List[str]] = None) -> dict:
-    return _default_gotify.send(header, lines)
+
+def notify_gotify(title: str, lines: Optional[List[str]] = None, image_url: Optional[str] = None) -> dict:
+    return _default_gotify.send(title, lines, image_url=image_url)

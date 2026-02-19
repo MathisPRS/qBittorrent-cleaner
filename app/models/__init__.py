@@ -4,4 +4,4 @@ from .movies import Movie
 from .series import Series
 from .torrents import Torrents
 
-__all__ = ["db", "Movie", "Series", "Torrents"]
+__all__ = ["db", "Movie", "Series","Episodes", "Torrents"]
