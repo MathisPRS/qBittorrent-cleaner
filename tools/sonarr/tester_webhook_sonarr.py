@@ -7,8 +7,8 @@ URL = "http://127.0.0.1:8124/api/sonarr"  # adapte si besoin
 
 payload = {
   "series": {
-    "id": 86,
-    "title": "Gachiakuta",
+    "id": 666,
+    "title": "TEST",
     "titleSlug": "gachiakuta",
     "path": "/nas-omv/Animes/Gachiakuta (2025) {tvdb-450537}",
     "tvdbId": 450537,

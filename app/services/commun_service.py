@@ -1,3 +1,4 @@
+from typing import Optional
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
@@ -17,6 +18,9 @@ class CommunService:
         self.movie_repo = MoviesRepo()
         self.qb = QbittorrentAdapter(QBIT_HOST, QBIT_USER, QBIT_PASS, logger_obj=self.logger)
 
+    # -----------------------------
+    # qBittorrent helpers
+    # -----------------------------
     def perform_qbittorrent_delete(self, hashes_to_delete: list) -> dict:
 
         qb_result = self.qb.delete_torrents(hashes_to_delete, delete_files=True)
@@ -28,23 +32,32 @@ class CommunService:
         deleted_hashes = [hash_value for (hash_value, _name) in deleted]
         hashes_to_delete_in_db = deleted_hashes + absent
 
-        # Logs clairs et utiles
         if deleted_hashes:
-            self.logger.info("[qBittorrent] deleted hashes: %s", ", ".join(deleted_hashes))
+            self.logger.info("[qBittorrent] deleted hashes (%d):", len(deleted_hashes))
+            for h in deleted_hashes:
+                self.logger.info("  - %s", h)
 
         if absent:
-            self.logger.info("[qBittorrent] absent hashes: %s", ", ".join(absent))
+            self.logger.info("[qBittorrent] absent hashes (%d):", len(absent))
+            for h in absent:
+                self.logger.info("  - %s", h)
 
         if failed:
             failed_hashes = [hash_value for (hash_value, _name) in failed]
-            self.logger.warning("[qBittorrent] failed hashes: %s", ", ".join(failed_hashes))
-
+            self.logger.warning("[qBittorrent] failed hashes (%d):", len(failed_hashes))
+            for h in failed_hashes:
+                self.logger.warning("  - %s", h)
+                
         return {
             "deleted": deleted,
             "failed": failed,
             "absent": absent,
             "hashes_to_delete_in_db": hashes_to_delete_in_db,
         }
+
+    # -----------------------------
+    # BDD helpers
+    # -----------------------------
 
     def perform_bdd_delete(self, hashes_to_delete: list) -> dict:
        
@@ -103,6 +116,9 @@ class CommunService:
             "skipped_hashes": skipped_hashes,
         }
     
+    # -----------------------------
+    # Gotify helpers
+    # -----------------------------
     def _send_notify(self,
                  movie_title: str,
                  old_torrent: str | None,
@@ -156,3 +172,17 @@ class CommunService:
         # envoie
         return notify_gotify(title, lines, image_url=image_url)
 
+    # -----------------------------
+    # Torrent helpers
+    # -----------------------------
+    def ensure_torrent_exists(self, torrent_hash: str, name: Optional[str] = None):
+        """
+        Ensure a Torrents DB row exists for hash. Return the Torrents instance.
+        """
+        torrent = self.torrent_repo.get_by_hash(torrent_hash)
+        if torrent:
+            self.logger.debug("ensure_torrent_exists: existing torrent id=%s hash=%s", torrent.id, torrent.hash)
+            return torrent
+
+        self.logger.info("ensure_torrent_exists: creating torrent hash=%s name=%s", torrent_hash, name)
+        return self.torrent_repo.create(hashval=torrent_hash, name=name)

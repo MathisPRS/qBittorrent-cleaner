@@ -14,8 +14,8 @@ class RadarrService:
     def __init__(self, app):
         self.app = app
         self.logger = get_logger(__name__, app=app)
-        self.torrent_repo = TorrentsRepo()
-        self.movie_repo = MoviesRepo()
+        self.torrents_repo = TorrentsRepo()
+        self.movies_repo = MoviesRepo()
         self.commun_service = CommunService(app)
         self.qb = QbittorrentAdapter(QBIT_HOST, QBIT_USER, QBIT_PASS, logger_obj=self.logger)
         self.old_torrent_name = str
@@ -36,20 +36,18 @@ class RadarrService:
         self.movie_image_url = dto.get("image")
         self.new_torrent_name = release_title
 
-        torrent = self.torrent_repo.get_by_hash(torrent_hash)
-        if torrent is None:
-            torrent = self.torrent_repo.create(hashval=torrent_hash, name=release_title)
+        torrent = self.commun_service.ensure_torrent_exists(torrent_hash, release_title)
 
         movie = None
         if radarr_id:
-            movie = self.movie_repo.get_by_radarr_id(radarr_id)
+            movie = self.movies_repo.get_by_radarr_id(radarr_id)
             self.old_torrent_name = movie.latest_torrent.name
         if movie is None:
             case = "not_found"
         else:
             current_hash = None
             if movie.latest_torrent_id:
-                cur = self.torrent_repo.get_by_id(movie.latest_torrent_id)
+                cur = self.torrents_repo.get_by_id(movie.latest_torrent_id)
                 if cur:
                     current_hash = getattr(cur, "hash", None)
             case = "same" if (current_hash and current_hash.lower() == torrent_hash.lower()) else "different"
@@ -88,7 +86,7 @@ class RadarrService:
             db.session.rollback()
 
         # Get hashes to delete (old + cross-seeds)
-        hashes_to_delete = self.torrent_repo.find_hashes_to_delete(old_torrent_id)
+        hashes_to_delete = self.torrents_repo.find_hashes_to_delete(old_torrent_id)
 
         if not hashes_to_delete:
             self.logger.error("[BBDD] No hashes found for old_torrent_id=%s", old_torrent_id)
@@ -133,6 +131,6 @@ class RadarrService:
         }
 
     def handle_not_found(self, radarr_id, title, torrent):
-        movie = self.movie_repo.create(radarr_id=radarr_id, title=title, latest_torrent_id=torrent.id)
+        movie = self.movies_repo.create(radarr_id=radarr_id, title=title, latest_torrent_id=torrent.id)
         self.logger.info("[BBDD] movie created and linked to torrent (movie_id=%s, torrent_id=%s)", movie.id, torrent.id)
         return {"action": "create", "movie_id": movie.id, "torrent_id": torrent.id}

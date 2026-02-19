@@ -44,13 +44,13 @@ class TorrentsRepo:
         if existing:
             return existing
 
-        t = Torrents(hash=hv, name=name)
+        torrent = Torrents(hash=hv, name=name)
         try:
-            db.session.add(t)
+            db.session.add(torrent)
             db.session.flush()
             db.session.commit()
-            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s", t.id, t.hash, t.name)
-            return t
+            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s", torrent.id, torrent.hash, torrent.name)
+            return torrent
         except Exception:
             self.logger.exception("[BBDD] create torrent failed for %s", hv)
             try:

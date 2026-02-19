@@ -25,7 +25,8 @@ def sonarr_webhook(request, app):
     download_id = payload.get("downloadId")
     download_client = payload.get("downloadClient")
     download_client_type = payload.get("downloadClientType")
-    release = payload.get("release") or {}
+    release = payload.get("release")
+    release_type = release.get("releaseType")
 
     if not download_id:
         title = series.get("title") if series else None
@@ -62,7 +63,9 @@ def sonarr_webhook(request, app):
             "hash": download_id,
             "downloadClient": download_client,
             "downloadClientType": download_client_type,
-            "releaseTitle": release.get("releaseTitle")
+            "releaseTitle": release.get("releaseTitle"),
+            "releaseType": release_type,
+            "sourcePath": payload.get("sourcePath"),
         },
         "episodes": episodes,
         "episodeFiles": episode_files,
