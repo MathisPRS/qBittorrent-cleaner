@@ -23,7 +23,7 @@ VAR_QBIT_HOST = "http://192.168.10.100:8080"   # include scheme and port if need
 VAR_QBIT_USER = "mreclus"
 VAR_QBIT_PASS = "MatMai172356!!"
 
-VAR_INPUT_CATALOG = "./catalog.json"     # path to input catalog.json
+VAR_INPUT_CATALOG = "../../catalog.json"     # path to input catalog.json
 VAR_OUTPUT_FILTERED = "catalog_filtered.json"
 VAR_OUTPUT_MISSING = "catalog_missing.json"
 VAR_OUTPUT_QB_ONLY = "qb_only.json"

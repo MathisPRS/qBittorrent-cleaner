@@ -13,6 +13,7 @@ class Torrents(db.Model):
     # on retire unique=True ici et on déclare la contrainte nommée plus haut
     hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    indexer = db.Column(db.String(128), nullable=True)
 
     cross_seed_id = db.Column(
         db.Integer,
