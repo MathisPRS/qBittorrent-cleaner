@@ -2,52 +2,129 @@
 import sys
 import os
 from pathlib import Path
+from typing import Optional
 
-# --- s'assurer que la racine du projet est dans sys.path ---
+# ----------------------------------------
+# Résolution automatique de la racine projet
+# ----------------------------------------
 THIS_FILE = Path(__file__).resolve()
-PROJECT_ROOT = THIS_FILE.parents[2]  # tools/radarr/ -> remontons de 2 niveaux
+
+def find_project_root(start: Path, max_levels: int = 6) -> Optional[Path]:
+    """
+    Remonte l'arbre depuis `start` jusqu'à `max_levels` parents pour trouver
+    un répertoire contenant soit un dossier 'app', soit un fichier 'run.py'.
+    Retourne le Path du project root ou None si non trouvé.
+    """
+    p = start
+    for _ in range(max_levels + 1):
+        if (p / "app").is_dir() or (p / "run.py").is_file():
+            return p
+        if p.parent == p:
+            break
+        p = p.parent
+    return None
+
+PROJECT_ROOT = find_project_root(THIS_FILE.parent)
+if PROJECT_ROOT is None:
+    # fallback : utiliser deux niveaux au-dessus comme tu faisais, mais avertir
+    PROJECT_ROOT = THIS_FILE.parents[2] if len(THIS_FILE.parents) >= 3 else THIS_FILE.parent
+    # on n'échoue pas immédiatement pour garder tolérance, mais on logera si import fail
+
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Maintenant on peut importer les modules de l'application.
-# On essaie plusieurs stratégies pour récupérer l'objet Flask `app`.
+# ----------------------------------------
+# Tentatives pour récupérer un objet Flask `app`
+# ----------------------------------------
 flask_app = None
-try:
-    # cas le plus courant : run.py définit `app = Flask(...)`
-    import run as run_mod  # type: ignore
+import importlib
+import traceback
+
+_import_errors = []
+
+def try_import_run_module():
+    try:
+        run_mod = importlib.import_module("run")
+        return run_mod
+    except Exception as exc:
+        _import_errors.append(("import run", exc, traceback.format_exc()))
+        return None
+
+def try_from_app_import_create_app():
+    try:
+        # tente d'importer la factory create_app depuis le package app
+        mod = importlib.import_module("app")
+        create_app = getattr(mod, "create_app", None)
+        if callable(create_app):
+            return create_app
+        # fallback: maybe app.__init__ doesn't expose create_app but package has create_app attribute
+        # try import from app.__init__ explicitly (same as above though)
+        return None
+    except Exception as exc:
+        _import_errors.append(("from app import create_app", exc, traceback.format_exc()))
+        return None
+
+def try_from_app_import_app_instance():
+    try:
+        mod = importlib.import_module("app")
+        app_inst = getattr(mod, "app", None)
+        if app_inst is not None:
+            return app_inst
+        return None
+    except Exception as exc:
+        _import_errors.append(("from app import app", exc, traceback.format_exc()))
+        return None
+
+# 1) try run module
+run_mod = try_import_run_module()
+if run_mod is not None:
+    # prefer run.app if présent
     flask_app = getattr(run_mod, "app", None)
-except Exception:
-    flask_app = None
-
-if flask_app is None:
-    try:
-        # autre pattern : package app avec factory create_app
-        # from app import create_app OR from app import app
-        from app import create_app  # type: ignore
-        flask_app = create_app()
-    except Exception:
+    if callable(getattr(run_mod, "create_app", None)) and flask_app is None:
         try:
-            from app import app as app_from_pkg  # type: ignore
-            flask_app = app_from_pkg
-        except Exception:
-            flask_app = None
-
-if flask_app is None:
-    # dernier recours : essayer d'importer run and call create_app if exists
-    try:
-        import run as run_mod  # type: ignore
-        if hasattr(run_mod, "create_app"):
             flask_app = run_mod.create_app()
-    except Exception:
-        flask_app = None
+        except Exception as exc:
+            _import_errors.append(("run.create_app()", exc, traceback.format_exc()))
+
+# 2) try app.create_app
+if flask_app is None:
+    create_app_candidate = try_from_app_import_create_app()
+    if callable(create_app_candidate):
+        try:
+            flask_app = create_app_candidate()
+        except Exception as exc:
+            _import_errors.append(("app.create_app()", exc, traceback.format_exc()))
+
+# 3) try app.app instance
+if flask_app is None:
+    flask_app = try_from_app_import_app_instance()
+
+# 4) last-resort: re-check run module for create_app if not checked above
+if flask_app is None and run_mod is not None and callable(getattr(run_mod, "create_app", None)):
+    try:
+        flask_app = run_mod.create_app()
+    except Exception as exc:
+        _import_errors.append(("run.create_app() second try", exc, traceback.format_exc()))
 
 if flask_app is None:
+    # diagnostic utile pour debug : afficher tentatives et racine testée
+    diag = {
+        "project_root": str(PROJECT_ROOT),
+        "sys_path_head": sys.path[0],
+        "import_attempts": [
+            {"step": step, "error": str(err), "traceback_snippet": tb.splitlines()[:5]}
+            for (step, err, tb) in _import_errors
+        ]
+    }
     raise RuntimeError(
-        "Impossible de trouver l'objet Flask `app`. "
-        "Assure-toi que `run.py` expose `app` ou qu'un factory `create_app` existe dans `app`."
+        "Impossible de trouver ou d'initialiser l'objet Flask `app`.\n"
+        f"Diagnostique: {diag}\n"
+        "Assure-toi que `run.py` expose `app` ou qu'une factory `create_app` existe dans le package `app`."
     )
 
-# --- maintenant on peut importer le reste (après avoir réglé sys.path) ---
+# ----------------------------------------
+# Maintenant imports d'app (après avoir obtenu flask_app et sys.path)
+# ----------------------------------------
 from app.extensions import db
 from app.logger import get_logger
 from app.models.torrents import Torrents
