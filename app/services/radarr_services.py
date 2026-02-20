@@ -69,20 +69,7 @@ class RadarrService:
             self.logger.error("create_movie_and_link: failed to create movie (radarr_id=%s title=%s)", radarr_id, title)
             return {"action": "error", "message": "failed_create_movie"}
         self.logger.info("create_movie_and_link: created movie id=%s radarr_id=%s linked to torrent_id=%s", movie.id, radarr_id, torrent.id)
-
-        # notify (mimic Sonarr small notification when nothing to delete)
-        try:
-            self.commun_service._send_notify(
-                movie.title,
-                self._old_torrent_name or "—",
-                self._new_torrent_name,
-                deleted=[],
-                not_found=[],
-                failed=[],
-                image_url=self._movie_image_url
-            )
-        except Exception:
-            self.logger.exception("create_movie_and_link: notification failed (non-blocking)")
+        self.logger.info("No deletion detected, no Gotify needed")
 
         return {"action": "create_and_link", "movie_id": movie.id, "torrent_id": torrent.id}
 

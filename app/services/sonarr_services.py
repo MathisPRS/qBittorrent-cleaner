@@ -166,15 +166,7 @@ class SonarrService:
         # After processing all episodes
         if not hashes_to_delete:
             # nothing to delete — notify and return
-            self.commun_service._send_notify(
-                series_title := series_obj.title,
-                old_torrent := self._old_torrent_name,
-                new_torrent := self._new_torrent_name,
-                deleted := [],
-                not_found := created_episodes,
-                failed := failed_episodes,
-                image_url := self._series_image_url
-            )
+            self.logger.info("No deletion detected, no Gotify needed")
             return {
                 "action": "sync_completed_no_deletes",
                 "series_id": series_obj.id,

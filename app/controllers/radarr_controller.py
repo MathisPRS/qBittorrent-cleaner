@@ -76,6 +76,9 @@ def radarr_webhook(request, app):
 
     try:
         result = service.import_completed_movie(dto)
+        logger.info(f"---------------------------------------------------\n"+
+                    " Import du film : {title} terminé" 
+                    +"\n---------------------------------------------------")
         return jsonify({"ok": True, "result": result}), 200
     except Exception:
         logger.exception("radarr_webhook: unexpected error during processing")

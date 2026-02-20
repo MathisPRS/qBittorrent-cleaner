@@ -71,6 +71,10 @@ def sonarr_webhook(request, app):
    
     try:
         result = service.import_completed_episodes(dto)
+        result = service.import_completed_movie(dto)
+        logger.info(f"---------------------------------------------------\n"+
+                    " Import terminé concernant la serie: {title}" 
+                    +"\n---------------------------------------------------")
         return jsonify({"ok": True, "result": result}), 200
     except Exception:
         logger.exception("sonarr_webhook: unexpected error during processing")
