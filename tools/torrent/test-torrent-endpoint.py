@@ -15,7 +15,7 @@ def generate_random_hash():
 
 
 def main():
-    torrent_hash = generate_random_hash()
+    torrent_hash = "964e60a5dec633cbfd463da8ac2fc0100b066189"
 
     payload = {
         "name": TORRENT_NAME,

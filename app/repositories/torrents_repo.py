@@ -98,42 +98,67 @@ class TorrentsRepo:
         logger.info("[BBDD] Found %s cross-seed(s) for torrent_id=%s",len(hashes_to_delete), parent_torrent_id)
         return hashes_to_delete
     
-    def get_parent_by_name(self, name: str) -> Optional[Torrents]:
+    def get_parent_by_name(self, name: str, exclude_id: Optional[int] = None) -> Optional[Torrents]:
         if not name:
             return None
         try:
-            
-            return db.session.query(Torrents).filter(
+            q = db.session.query(Torrents).filter(
                 Torrents.name == name,
-                Torrents.cross_seed_id == None
-            ).first()
+                Torrents.cross_seed_id.is_(None)
+            )
+            if exclude_id is not None:
+                q = q.filter(Torrents.id != exclude_id)
+            return q.first()
         except Exception:
-            self.logger.exception("[BBDD] get_parent_by_name failed for %s", name)
+            self.logger.exception("[BBDD] get_parent_by_name failed for %s (exclude=%s)", name, exclude_id)
             return None
         
-    def set_cross_seed_parent(self, child_hash: str, parent_id: int) -> Optional[Torrents]:
-        if not child_hash or not parent_id:
+    def set_cross_seed_parent(self, child_hash: str, parent_id: int, child_name: Optional[str] = None) -> Optional[Torrents]:
+        """
+        Lie un torrent enfant (identifié par son hash) à un parent (parent_id)
+        en mettant à jour child.cross_seed_id = parent_id et, si fourni, child.name = child_name.
+        Retourne l'objet Torrent mis à jour ou None si échec.
+        """
+
+        if not child_hash or parent_id is None:
+            self.logger.warning("[BBDD] set_cross_seed_parent called with missing args: hash=%s parent_id=%s", child_hash, parent_id)
             return None
 
-        hash = _normalize_hash(child_hash)
+        hv = _normalize_hash(child_hash)
         try:
-            cross_seed_torrent = db.session.query(Torrents).filter(Torrents.hash == hash).first()
-            if not cross_seed_torrent:
-                self.logger.warning("[BBDD] set_cross_seed_parent: child not found for hash=%s", hash)
+            torrent = db.session.query(Torrents).filter(Torrents.hash == hv).first()
+            if not torrent:
+                self.logger.warning("[BBDD] set_cross_seed_parent: child not found for hash=%s", hv)
                 return None
 
-            # si déjà lié au même parent, on renvoie tel quel
-            if cross_seed_torrent.cross_seed_id == parent_id:
-                self.logger.info("[BBDD] set_cross_seed_parent: already linked child_id=%s parent_id=%s", cross_seed_torrent.id, parent_id)
-                return cross_seed_torrent
+            changed = False
 
-            cross_seed_torrent.cross_seed_id = parent_id
-            db.session.add(cross_seed_torrent)
-            db.session.commit()
-            self.logger.info("[BBDD] Linked torrent id=%s (hash=%s) to parent_id=%s", cross_seed_torrent.id, cross_seed_torrent.hash, parent_id)
-            return cross_seed_torrent
+            # Mettre à jour le nom si fourni et différent
+            if child_name is not None and (torrent.name != child_name):
+                torrent.name = child_name
+                changed = True
+                self.logger.debug("[BBDD] Updating torrent name for id=%s hash=%s -> %s", torrent.id, hv, child_name)
+
+            # Toujours essayer de mettre à jour le cross_seed_id (force update)
+            if torrent.cross_seed_id != parent_id:
+                torrent.cross_seed_id = parent_id
+                changed = True
+                self.logger.debug("[BBDD] Setting cross_seed_id for torrent id=%s to parent_id=%s", torrent.id, parent_id)
+            else:
+                # Même valeur : on logge mais on considère quand même l'opération comme OK
+                self.logger.info("[BBDD] set_cross_seed_parent: cross_seed_id already %s for torrent id=%s", parent_id, torrent.id)
+
+            if changed:
+                db.session.add(torrent)
+                db.session.commit()
+                self.logger.info("[BBDD] Linked/updated torrent id=%s (hash=%s) to parent_id=%s", torrent.id, hv, parent_id)
+            else:
+                # Même si rien à commit, renvoyer l'objet pour confort caller
+                self.logger.debug("[BBDD] No DB change required for torrent id=%s (hash=%s)", torrent.id, hv)
+
+            return torrent
         except Exception:
-            self.logger.exception("[BBDD] set_cross_seed_parent failed for %s -> %s", hash, parent_id)
+            self.logger.exception("[BBDD] set_cross_seed_parent failed for %s -> %s", hv, parent_id)
             try:
                 db.session.rollback()
             except Exception:
