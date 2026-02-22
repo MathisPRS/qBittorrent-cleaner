@@ -97,3 +97,45 @@ class TorrentsRepo:
 
         logger.info("[BBDD] Found %s cross-seed(s) for torrent_id=%s",len(hashes_to_delete), parent_torrent_id)
         return hashes_to_delete
+    
+    def get_parent_by_name(self, name: str) -> Optional[Torrents]:
+        if not name:
+            return None
+        try:
+            
+            return db.session.query(Torrents).filter(
+                Torrents.name == name,
+                Torrents.cross_seed_id == None
+            ).first()
+        except Exception:
+            self.logger.exception("[BBDD] get_parent_by_name failed for %s", name)
+            return None
+        
+    def set_cross_seed_parent(self, child_hash: str, parent_id: int) -> Optional[Torrents]:
+        if not child_hash or not parent_id:
+            return None
+
+        hash = _normalize_hash(child_hash)
+        try:
+            cross_seed_torrent = db.session.query(Torrents).filter(Torrents.hash == hash).first()
+            if not cross_seed_torrent:
+                self.logger.warning("[BBDD] set_cross_seed_parent: child not found for hash=%s", hash)
+                return None
+
+            # si déjà lié au même parent, on renvoie tel quel
+            if cross_seed_torrent.cross_seed_id == parent_id:
+                self.logger.info("[BBDD] set_cross_seed_parent: already linked child_id=%s parent_id=%s", cross_seed_torrent.id, parent_id)
+                return cross_seed_torrent
+
+            cross_seed_torrent.cross_seed_id = parent_id
+            db.session.add(cross_seed_torrent)
+            db.session.commit()
+            self.logger.info("[BBDD] Linked torrent id=%s (hash=%s) to parent_id=%s", cross_seed_torrent.id, cross_seed_torrent.hash, parent_id)
+            return cross_seed_torrent
+        except Exception:
+            self.logger.exception("[BBDD] set_cross_seed_parent failed for %s -> %s", hash, parent_id)
+            try:
+                db.session.rollback()
+            except Exception:
+                self.logger.exception("[BBDD] rollback failed after set_cross_seed_parent error")
+            return None
