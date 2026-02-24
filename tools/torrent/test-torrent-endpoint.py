@@ -4,8 +4,8 @@ import secrets
 # ==========================
 # CONFIG
 # ==========================
-TORRENT_NAME = "Mathis.fais.des.tests.2160p.5.1.X265.mkv"
-API_URL = "http://192.168.10.5:8124/api/torrent"
+TORRENT_NAME = "Taken 2 (2012) Version Non Censurée MULTi VFF 1080p 10bit HDLight BluRay x265 AC3 5.1-MM91.mkv"
+API_URL = "http://127.0.0.1:8124/api/torrent"
 
 # ==========================
 # GENERATE RANDOM HASH (40 hex chars like torrent info-hash)
@@ -15,11 +15,14 @@ def generate_random_hash():
 
 
 def main():
-    torrent_hash = "964e60a5dec633cbfd463da8ac2fc0100b066189"
+    torrent_hash = generate_random_hash()
+
+    parent_hash = "131fb13ty8974cf4agy_d9cda5fad89agsf4c4c1"
 
     payload = {
         "name": TORRENT_NAME,
-        "hash": torrent_hash
+        "hash": torrent_hash,
+        "parent_hash": parent_hash
     }
 
     print("Payload envoyé :")

@@ -57,7 +57,7 @@ payload = {
   "isUpgrade": False,
   "downloadClient": "qBittorrent (films)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "131fb13ty7246cf4agy_d9cda5fad89agsf4c4c1",
+  "downloadId": "131fb13ty8974cf4agy_d9cda5fad89agsf4c4c1",
   "customFormatInfo": {
     "customFormats": [
       {"id": 13, "name": "1080p"},

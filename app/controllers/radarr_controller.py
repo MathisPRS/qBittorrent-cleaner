@@ -26,6 +26,7 @@ def radarr_webhook(request, app):
 
     title = movie.get("title")
     radarr_id = movie.get("id")
+    sourcePath = movie_file.get("sourcePath")
     download_id = payload.get("downloadId")
 
     # If there's no downloadId, treat this event as non-actionable (Radarr test/event), avoid 400 spam.
@@ -69,17 +70,64 @@ def radarr_webhook(request, app):
             "downloadClientType": payload.get("downloadClientType"),
             "size": movie_file.get("size"),
             "quality": movie_file.get("quality") or release.get("quality"),
-            "relativePath": movie_file.get("relativePath"),
-            "path": movie_file.get("path"),
+            "sourcePath" : sourcePath,
         },
     }
 
     try:
         result = service.import_completed_movie(dto)
-        logger.info(f"---------------------------------------------------\n"+
-                    " Import du film : {title} terminé" 
-                    +"\n---------------------------------------------------")
-        return jsonify({"ok": True, "result": result}), 200
+
+        action = result.get("action") if isinstance(result, dict) else None
+
+        if action == "created":
+            logger.info(
+                "\n---------------------------------------------------\n"
+                f" Film créé avec succès : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": True, "result": result}), 201
+
+        elif action == "updated":
+            logger.info(
+                "\n---------------------------------------------------\n"
+                f" Film mis à jour : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": True, "result": result}), 200
+
+
+        elif action == "ignored":
+            logger.info(
+                "\n---------------------------------------------------\n"
+                f" Film ignoré (aucune action requise) : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": True, "result": result}), 204
+
+        elif action == "no_parent_found":
+            logger.warning(
+                "\n---------------------------------------------------\n"
+                f" Parent introuvable pour : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": False, "result": result}), 409
+
+        elif action == "error":
+            logger.error(
+                "\n---------------------------------------------------\n"
+                f" Erreur métier lors du traitement du film : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": False, "result": result}), 422
+
+        else:
+            logger.info(
+                "\n---------------------------------------------------\n"
+                f" Import du film terminé (action inconnue) : {title}\n"
+                "---------------------------------------------------"
+            )
+            return jsonify({"ok": True, "result": result}), 200
+
     except Exception:
         logger.exception("radarr_webhook: unexpected error during processing")
         return jsonify({"ok": False, "error": "internal error"}), 500

@@ -98,27 +98,41 @@ class TorrentsRepo:
         logger.info("[BBDD] Found %s cross-seed(s) for torrent_id=%s",len(hashes_to_delete), parent_torrent_id)
         return hashes_to_delete
     
-    def get_parent_by_name(self, name: str, exclude_id: Optional[int] = None) -> Optional[Torrents]:
-        if not name:
+    def get_parent_by_name(self, name: str, exclude_id: Optional[int] = None, parent_hash: Optional[str] = None) -> Optional[Torrents]:
+        if not name and not parent_hash:
             return None
+
         try:
-            q = db.session.query(Torrents).filter(
-                Torrents.name == name,
-                Torrents.cross_seed_id.is_(None)
-            )
-            if exclude_id is not None:
-                q = q.filter(Torrents.id != exclude_id)
-            return q.first()
+            # Si hash on l'utilise
+            if parent_hash:
+                hv = _normalize_hash(parent_hash)
+                if not hv:
+                    return None
+                q = db.session.query(Torrents).filter(
+                    Torrents.hash == hv,
+                    Torrents.cross_seed_id.is_(None)
+                )
+                if exclude_id is not None:
+                    q = q.filter(Torrents.id != exclude_id)
+                parent = q.first()
+                if parent:
+                    return parent
+            # Recherche par nom 
+            if name:
+                q = db.session.query(Torrents).filter(
+                    Torrents.name == name,
+                    Torrents.cross_seed_id.is_(None)
+                )
+                if exclude_id is not None:
+                    q = q.filter(Torrents.id != exclude_id)
+                return q.first()
+
+            return None
         except Exception:
-            self.logger.exception("[BBDD] get_parent_by_name failed for %s (exclude=%s)", name, exclude_id)
+            self.logger.exception("[BBDD] get_parent_by_name failed for %s (exclude=%s, parent_hash=%s)", name, exclude_id, parent_hash)
             return None
         
     def set_cross_seed_parent(self, child_hash: str, parent_id: int, child_name: Optional[str] = None) -> Optional[Torrents]:
-        """
-        Lie un torrent enfant (identifié par son hash) à un parent (parent_id)
-        en mettant à jour child.cross_seed_id = parent_id et, si fourni, child.name = child_name.
-        Retourne l'objet Torrent mis à jour ou None si échec.
-        """
 
         if not child_hash or parent_id is None:
             self.logger.warning("[BBDD] set_cross_seed_parent called with missing args: hash=%s parent_id=%s", child_hash, parent_id)

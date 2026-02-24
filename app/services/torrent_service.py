@@ -1,3 +1,4 @@
+# app/services/torrent_service.py
 from typing import Dict, Optional
 from ..services.commun_service import CommunService
 from ..repositories.torrents_repo import TorrentsRepo
@@ -14,21 +15,17 @@ class TorrentService:
         self.commun_service = CommunService(app)
         self.torrents_repo = TorrentsRepo()
 
+        # état stocké
         self.parent_torrent: Optional[int] = None
         self.cross_seed_torrent_name: Optional[str] = None
         self.cross_seed_torrent_hash: Optional[str] = None
-        
+        self.parent_torrent_hash: Optional[str] = None
 
     def import_cross_seed(self, dto: Dict) -> Dict:
-        """
-        DTO attendu : { "name": ..., "hash": ... }
-        Comportement : si l'enfant existe déjà, on met quand même à jour ses infos (name, cross_seed_id).
-        """
-
         self.cross_seed_torrent_name = dto.get("name")
         self.cross_seed_torrent_hash = dto.get("hash")
+        self.parent_torrent_hash = dto.get("parent_hash") or None
 
-        # Anti-casse basique
         if not self.cross_seed_torrent_name or not self.cross_seed_torrent_hash:
             logger.warning("import_cross_seed: missing name or hash in dto")
             return {
@@ -39,82 +36,140 @@ class TorrentService:
                 "message": "invalid_payload"
             }
 
-        # Créer / récupérer le torrent enfant (peut retourner existant)
-        cross_seed_torrent = self.commun_service.ensure_torrent_exists(
-            self.cross_seed_torrent_hash,
-            self.cross_seed_torrent_name
-        )
+        try:
+            parent = self.torrents_repo.get_parent_by_name(
+                name=self.cross_seed_torrent_name,
+                exclude_id=None,                      
+                parent_hash=self.parent_torrent_hash  # peut être None
+            )
+            parent_id = parent.id if parent else None
+        except Exception:
+            logger.exception("import_cross_seed: get_parent_by_name failed for name=%s parent_hash=%s",
+                             self.cross_seed_torrent_name, self.parent_torrent_hash)
+            parent = None
+            parent_id = None
 
-        # extraire id/hash/name de l'enfant si possible
-        child_id = getattr(cross_seed_torrent, "id", None)
-        torrent_name = getattr(cross_seed_torrent, "name", self.cross_seed_torrent_name)
-        torrent_hash = getattr(cross_seed_torrent, "hash", self.cross_seed_torrent_hash)
+        # si parent introuvable -> on n'écrit rien ; notify Gotify et on renvoie
+        if parent_id is None:
+            logger.info("import_cross_seed: parent NOT FOUND for name=%s parent_hash=%s — will not create cross-seed",
+                        self.cross_seed_torrent_name, self.parent_torrent_hash)
+            # Gotify: alerte pour intervention manuelle
+            try:
+                resp = notify_gotify(
+                    title="Cross-seed non créé - Parent not found",
+                    lines=[
+                        f"Nom : {self.cross_seed_torrent_name}",
+                        f"Hash : {self.cross_seed_torrent_hash}",
+                        "Parent introuvable — le cross-seed n'a pas été créé."
+                    ]
+                )
+                if resp and resp.get("ok"):
+                    logger.info("Gotify: no-parent notification sent")
+                else:
+                    logger.warning("Gotify: no-parent notification returned not ok: %s", resp)
+            except Exception:
+                logger.exception("Gotify: exception while sending no-parent notification")
 
-        # Trouver le parent en excluant l'enfant (évite le self-link si l'enfant a déjà id)
-        parent = self.torrents_repo.get_parent_by_name(self.cross_seed_torrent_name, exclude_id=child_id)
-        parent_id = parent.id if parent else None
+            return {
+                "torrent": str(self.cross_seed_torrent_name),
+                "hash": str(self.cross_seed_torrent_hash),
+                "cross_seed_id": None,
+                "linked": False,
+                "message": "parent_not_found_no_create"
+            }
 
-        linked_torrent = None
+        # 2) parent trouvé -> créer l'enfant puis le lier
+        try:
+            child = self.commun_service.ensure_torrent_exists(
+                self.cross_seed_torrent_hash,
+                self.cross_seed_torrent_name
+            )
+        except Exception:
+            logger.exception("import_cross_seed: ensure_torrent_exists failed for hash=%s name=%s",
+                             self.cross_seed_torrent_hash, self.cross_seed_torrent_name)
+            return {
+                "torrent": self.cross_seed_torrent_name,
+                "hash": self.cross_seed_torrent_hash,
+                "cross_seed_id": None,
+                "linked": False,
+                "message": "ensure_failed"
+            }
+
+        # extraire infos enfant si disponibles
+        child_hash = getattr(child, "hash", None) or self.cross_seed_torrent_hash
+        child_name = getattr(child, "name", None) or self.cross_seed_torrent_name
+
+        # tenter de lier l'enfant au parent
         linked = False
         result_message = "none"
-
-        if parent_id is None:
-            # pas de parent -> on ne peut pas lier
-            logger.info("import_cross_seed: no parent found for name=%s (child_id=%s)", self.cross_seed_torrent_name, child_id)
-            result_message = "no_parent_found"
-        else:
-            # On appelle set_cross_seed_parent systématiquement : 
-            # si l'enfant existe déjà, on mettra à jour son cross_seed_id et éventuellement son name.
+        try:
             linked_torrent = self.torrents_repo.set_cross_seed_parent(
-                child_hash=torrent_hash,
+                child_hash=child_hash,
                 parent_id=parent_id,
-                child_name=torrent_name
+                child_name=child_name
             )
-
             if linked_torrent:
-                # si tout s'est bien passé on considère linked True (même si déjà identique avant)
                 linked = True
                 result_message = "linked"
                 self.parent_torrent = parent_id
-                logger.info("import_cross_seed: child (hash=%s) linked/updated to parent_id=%s", torrent_hash, parent_id)
+                logger.info("import_cross_seed: child created/linked: child_hash=%s parent_id=%s", child_hash, parent_id)
             else:
                 linked = False
                 result_message = "link_failed"
-                logger.warning("import_cross_seed: failed to link child (hash=%s) to parent_id=%s", torrent_hash, parent_id)
-
-        # Gotify only on successful link
-        if linked:
-            try:
-                response = notify_gotify(
-                    title=f"Ajout Cross seed reussi",
-                    lines=[f"Nom du cross-seed : {torrent_name}"]
-                )
-                if response and response.get("ok"):
-                    logger.info("Gotify notification sent successfully")
-                else:
-                    logger.warning("Gotify returned failure response: %s", response)
-            except Exception:
-                logger.exception("Gotify unexpected error")
-
-        # Préparer la réponse JSON-serializable
-        try:
-            final_hash = str(torrent_hash) if torrent_hash is not None else None
+                logger.warning("import_cross_seed: set_cross_seed_parent returned None for child_hash=%s parent_id=%s",
+                               child_hash, parent_id)
         except Exception:
-            final_hash = self.cross_seed_torrent_hash
+            logger.exception("import_cross_seed: set_cross_seed_parent raised for child_hash=%s parent_id=%s",
+                             child_hash, parent_id)
+            linked = False
+            result_message = "link_exception"
 
+        # 3) notifications Gotify selon le cas
         try:
-            final_name = str(torrent_name) if torrent_name is not None else None
+            if linked:
+                resp = notify_gotify(
+                    title=f"Ajout Cross seed reussi: {child_name}",
+                    lines=[f"Nom du cross-seed : {child_name}", f"Hash : {child_hash}"]
+                )
+                if resp and resp.get("ok"):
+                    logger.info("Gotify: linked notification ok")
+                else:
+                    logger.warning("Gotify: linked notification returned not ok: %s", resp)
+            else:
+                # link failed -> notify for manual check (optional)
+                resp = notify_gotify(
+                    title="Cross-seed link failed",
+                    lines=[
+                        f"Nom : {child_name}",
+                        f"Hash : {child_hash}",
+                        f"Parent id attendu : {parent_id}",
+                        "Action requise: vérifier manuellement."
+                    ]
+                )
+                if resp and resp.get("ok"):
+                    logger.info("Gotify: link-failed notification sent")
+                else:
+                    logger.warning("Gotify: link-failed notification returned not ok: %s", resp)
+        except Exception:
+            logger.exception("Gotify: unexpected error in notification logic")
+
+        # 4) réponse JSON-serializable
+        try:
+            final_name = str(child_name) if child_name is not None else str(self.cross_seed_torrent_name)
         except Exception:
             final_name = self.cross_seed_torrent_name
 
+        try:
+            final_hash = str(child_hash) if child_hash is not None else str(self.cross_seed_torrent_hash)
+        except Exception:
+            final_hash = self.cross_seed_torrent_hash
+
         returned_parent_id = int(parent_id) if linked and parent_id is not None else None
 
-        response = {
+        return {
             "torrent": final_name,
             "hash": final_hash,
             "cross_seed_id": returned_parent_id,
-            "linked": linked,
+            "linked": bool(linked),
             "message": result_message
         }
-
-        return response

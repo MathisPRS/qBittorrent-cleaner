@@ -37,7 +37,7 @@ class SonarrService:
         sonarr_id = dto.get("sonarr_id")
         series_title = dto.get("title")
         self._series_image_url = dto.get("image")
-        self._new_torrent_name = self.get_torrent_name(dto)
+        self._new_torrent_name = self.commun_service.get_torrent_name(dto)
 
         # ensure torrent DB row exists
         torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)
@@ -54,20 +54,7 @@ class SonarrService:
         return self.sync_existing_series_episodes(existing_series, torrent, dto)
 
    
-    def get_torrent_name(self, dto: dict) -> str | None:
-        release = dto.get("torrent")
-        release_type = release.get("releaseType")
-
-        if release_type == "seasonPack":
-            source_path = release.get("sourcePath")
-            if source_path:
-                return os.path.basename(source_path.rstrip("/\\"))
-            return None
-
-        if release_type == "singleEpisode":
-            return release.get("releaseTitle")
-
-        return None
+    
     
     # -----------------------------
     # Series not found flow

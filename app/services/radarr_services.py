@@ -10,11 +10,6 @@ from app.logger import get_logger
 
 
 class RadarrService:
-    """
-    Service to handle Radarr completed-download notifications.
-    Behaviour mirrors SonarrService: ensure torrent exists, set self._new_torrent,
-    create movie if missing, or sync existing movie (link / replace + cleanup).
-    """
 
     def __init__(self, app):
         self.app = app
@@ -30,11 +25,8 @@ class RadarrService:
         self._movie_image_url: Optional[str] = None
         self._new_torrent = None
 
-    # -----------------------------
-    # Entry point (public)
-    # -----------------------------
-    def import_completed_movie(self, dto: Dict) -> Dict:
 
+    def import_completed_movie(self, dto: Dict) -> Dict:
         torrent_dto = dto.get("torrent") or {}
         torrent_hash = torrent_dto.get("hash")
         if not torrent_hash:
@@ -42,11 +34,9 @@ class RadarrService:
 
         radarr_id = dto.get("radarr_id")
         title = dto.get("title")
-        release_title = torrent_dto.get("releaseTitle")
         self._movie_image_url = dto.get("image")
-        self._new_torrent_name = release_title
+        self._new_torrent_name = self.commun_service.get_torrent_name(dto)
 
-        # Ensure torrent row exists and store it (same pattern as Sonarr)
         torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)
         self._new_torrent = torrent
 
@@ -54,15 +44,10 @@ class RadarrService:
         existing_movie = self.movies_repo.get_by_radarr_id(radarr_id) if radarr_id else None
 
         if existing_movie is None:
-            # create movie and link to new torrent (mirrors create_series_and_create_episodes)
             return self.create_movie_and_link(radarr_id, title, torrent)
 
-        # movie exists -> sync/replace logic
-        return self.sync_existing_movie(existing_movie, torrent, torrent_hash)
+        return self.update_existing_movie(existing_movie, torrent, torrent_hash)
 
-    # -----------------------------
-    # Create movie when not found
-    # -----------------------------
     def create_movie_and_link(self, radarr_id: Optional[str], title: str, torrent) -> Dict:
         movie = self.movies_repo.create(radarr_id=radarr_id, title=title, latest_torrent_id=torrent.id)
         if not movie:
@@ -71,13 +56,11 @@ class RadarrService:
         self.logger.info("create_movie_and_link: created movie id=%s radarr_id=%s linked to torrent_id=%s", movie.id, radarr_id, torrent.id)
         self.logger.info("No deletion detected, no Gotify needed")
 
-        return {"action": "create_and_link", "movie_id": movie.id, "torrent_id": torrent.id}
+        # unchanged semantics: created
+        return {"action": "created", "movie_id": movie.id, "torrent_id": torrent.id}
 
-    # -----------------------------
-    # Sync existing movie
-    # -----------------------------
-    def sync_existing_movie(self, movie, new_torrent, torrent_hash: str) -> Dict:
-        
+    
+    def update_existing_movie(self, movie, new_torrent, torrent_hash: str) -> Dict:
         current_hash = None
         # if an old torrent id exists, fetch it to get its hash and name (for notifications)
         if movie.latest_torrent_id:
@@ -86,10 +69,10 @@ class RadarrService:
                 current_hash = getattr(cur, "hash", None)
                 self._old_torrent_name = getattr(cur, "name", None)
 
-        # if same hash -> noop
+        # if same hash -> previously returned "noop" => now return "ignored"
         if current_hash and current_hash.lower() == (torrent_hash or "").strip().lower():
-            self.logger.info("sync_existing_movie: movie id=%s - received torrent matches current latest hash -> noop", movie.id)
-            return {"action": "noop", "movie_id": movie.id, "torrent_id": new_torrent.id}
+            self.logger.info("sync_existing_movie: movie id=%s - received torrent matches current latest hash -> noop/ignored", movie.id)
+            return {"action": "ignored", "movie_id": movie.id, "torrent_id": new_torrent.id}
 
         # if no previous torrent -> link and commit (no deletion)
         if not movie.latest_torrent_id:
@@ -124,9 +107,8 @@ class RadarrService:
             except Exception:
                 self.logger.exception("sync_existing_movie: notify failed (non-blocking)")
 
-            return {"action": "link", "movie_id": movie.id, "new_torrent_id": new_torrent.id}
+            return {"action": "updated", "movie_id": movie.id, "new_torrent_id": new_torrent.id}
 
-        # else: we have an old torrent and it's different -> replace flow with cleanup
         old_torrent_id = movie.latest_torrent_id
 
         # Update movie to point to new torrent first (keeping DB consistent)
@@ -151,8 +133,8 @@ class RadarrService:
 
         if not hashes_to_delete:
             self.logger.error("sync_existing_movie: no hashes found for old_torrent_id=%s", old_torrent_id)
-            # still return success (we updated link), but flag inconsistency
-            return {"action": "replace_no_hashes_found", "movie_id": movie.id, "new_torrent_id": new_torrent.id}
+           
+            return {"action": "updated", "movie_id": movie.id, "new_torrent_id": new_torrent.id, "note": "no_hashes_found_for_old_torrent"}
 
         # Delete from qBittorrent and gather results
         qb_out = self.commun_service.perform_qbittorrent_delete(hashes_to_delete)
@@ -173,7 +155,6 @@ class RadarrService:
         absent_names = list(absent) if absent else []
         failed_names = [n for (_h, n) in failed if n]
 
-        # send notification
         try:
             self.commun_service._send_notify(
                 movie.title,
@@ -188,7 +169,7 @@ class RadarrService:
             self.logger.exception("sync_existing_movie: notify failed (non-blocking)")
 
         return {
-            "action": "replace",
+            "action": "updated",
             "movie_id": movie.id,
             "old_torrent_id": old_torrent_id,
             "new_torrent_id": new_torrent.id,

@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
@@ -186,3 +187,11 @@ class CommunService:
 
         self.logger.info("ensure_torrent_exists: creating torrent hash=%s name=%s", torrent_hash, name)
         return self.torrent_repo.create(hashval=torrent_hash, name=name)
+    
+    def get_torrent_name(self, dto: dict) -> str | None:
+        release = dto.get("torrent")
+        source_path = release.get("sourcePath")
+        if source_path:
+            name_torrent = os.path.basename(source_path.rstrip("/\\"))
+            return name_torrent
+        return None
