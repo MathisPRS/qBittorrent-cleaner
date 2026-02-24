@@ -7,6 +7,7 @@ from requests.exceptions import RequestException
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from app.logger import get_logger
+from urllib.parse import urlparse
 from ..config import QBIT_HOST
 
 REQ_TIMEOUT = 12
@@ -174,3 +175,47 @@ class QbittorrentAdapter:
 
         return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
 
+
+    def get_indexer_from_hash(self, torrent_hash: str) -> str | None:
+        if not torrent_hash:
+            self.logger.info("[qBittorrent] no hash given, cannot search torrent indexer")
+            return None
+
+        try:
+            self.login()
+            trackers = self.client.torrents_trackers(torrent_hash)
+
+            if not trackers:
+                return None
+
+            for tracker in trackers:
+                url = getattr(tracker, "url", None)
+                if not url:
+                    continue
+
+                parsed = urlparse(url)
+                indexer_url = f"{parsed.scheme}://{parsed.netloc}".lower()
+                self.logger.debug(
+                    "[qBittorrent] tracker base url detected: %s",
+                    indexer_url
+                )
+
+                # ----- Manual mapping -----
+                if "tracker.torr9.xyz" in indexer_url:
+                    return "torr9"
+
+                if "tracker.la-cale.space" in indexer_url:
+                    return "lacale"
+
+                if "tracker.p2p-world.net" in indexer_url:
+                    return "ygg"
+
+            return indexer_url
+
+        except Exception as e:
+            self.logger.exception(
+                "[qBittorrent] failed to retrieve indexer for hash=%s: %s",
+                torrent_hash,
+                e
+            )
+            return None
