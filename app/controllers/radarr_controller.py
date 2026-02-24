@@ -3,41 +3,40 @@ from flask import jsonify
 from app.logger import get_logger
 from ..services.radarr_services import RadarrService
 
-
 def radarr_webhook(request, app):
     logger = get_logger(__name__, app=app)
     service = RadarrService(app)
 
     payload = request.get_json(silent=True)
-    if payload is None:
-        logger.warning("radarr_webhook: invalid json payload")
+    if not payload:
+        logger.warning("radarr_webhook: invalid or empty json payload")
         return jsonify({"ok": False, "error": "invalid json"}), 400
 
-    # movie and release are required for any processing; downloadId may be absent for some Radarr events
-    required = ["movie", "release"]
-    missing = [k for k in required if k not in payload or payload.get(k) in (None, {})]
+    required = ("movie", "release")
+    missing = [k for k in required if not payload.get(k)]
     if missing:
         logger.error("radarr_webhook: missing keys in payload: %s", missing)
         return jsonify({"ok": False, "error": "missing_keys", "missing": missing}), 400
 
-    movie = payload.get("movie")
-    release = payload.get("release")
+    movie = payload["movie"]
+    release = payload["release"]
     movie_file = payload.get("movieFile")
 
     title = movie.get("title")
     radarr_id = movie.get("id")
-    sourcePath = movie_file.get("sourcePath")
+    source_path = (movie_file or {}).get("sourcePath")
     download_id = payload.get("downloadId")
 
-    # If there's no downloadId, treat this event as non-actionable (Radarr test/event), avoid 400 spam.
     if not download_id:
-        logger.info("radarr_webhook: no downloadId present — ignoring event (movie=%s, radarr_id=%s)", title, radarr_id)
+        logger.info(
+            "radarr_webhook: no downloadId present — ignoring event (movie=%s radarr_id=%s)",
+            title, radarr_id
+        )
         return jsonify({"ok": False, "message": "no downloadId — ignored"}), 200
 
-    # Additional defensive checks
-    if title is None or radarr_id is None:
+    if not title or radarr_id is None:
         logger.error(
-            "radarr_webhook: missing subkeys movie.title/movie.id; movie.title=%s radarr_id=%s",
+            "radarr_webhook: missing movie.title or movie.id (title=%s id=%s)",
             title, radarr_id
         )
         return jsonify({
@@ -46,88 +45,60 @@ def radarr_webhook(request, app):
             "details": "movie.title and movie.id are required"
         }), 400
 
-    # If movieFile missing -> fallback minimal (log it)
     if not movie_file:
         logger.info("radarr_webhook: movieFile missing -> using fallback from release/movie")
         movie_file = {
-            "relativePath": release.get("releaseTitle") or movie.get("title") or f"radarr-{radarr_id}",
+            "relativePath": release.get("releaseTitle") or title or f"radarr-{radarr_id}",
             "size": release.get("size") or 0,
             "path": movie.get("folderPath") or ""
         }
 
-    release_title = release.get("releaseTitle")
-
-    # Build DTO (defensive)
     dto = {
         "radarr_id": str(radarr_id),
         "title": title,
-        "image": movie.get("images", [{}])[0].get("remoteUrl"),
+        "image": (movie.get("images") or [{}])[0].get("remoteUrl"),
         "torrent": {
             "hash": download_id,
             "title": movie_file.get("relativePath"),
-            "releaseTitle": release_title,
+            "releaseTitle": release.get("releaseTitle"),
             "downloadClient": payload.get("downloadClient"),
             "downloadClientType": payload.get("downloadClientType"),
             "size": movie_file.get("size"),
-            "quality": movie_file.get("quality") or release.get("quality"),
-            "sourcePath" : sourcePath,
+            "quality": release.get("quality"),
+            "sourcePath": source_path,
         },
     }
 
     try:
         result = service.import_completed_movie(dto)
 
-        action = result.get("action") if isinstance(result, dict) else None
+        if not isinstance(result, dict):
+            logger.error("radarr_webhook: service returned unexpected type: %s", type(result))
+            return jsonify({"ok": False, "error": "invalid_service_response"}), 500
 
-        if action == "created":
-            logger.info(
-                "\n---------------------------------------------------\n"
-                f" Film créé avec succès : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": True, "result": result}), 201
+        #Logging reponse action
+        action = result.get("action")
+        action_map = {
+            "created": (201, "info", f"Film créé avec succès : {title}"),
+            "updated": (200, "info", f"Film mis à jour : {title}"),
+            "ignored": (200, "info", f"Film ignoré (aucune action requise) : {title}"),
+            "no_parent_found": (409, "warning", f"Parent introuvable pour : {title}"),
+            "error": (422, "error", f"Erreur métier lors du traitement du film : {title}"),
+        }
 
-        elif action == "updated":
-            logger.info(
-                "\n---------------------------------------------------\n"
-                f" Film mis à jour : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": True, "result": result}), 200
+        status, level, msg = action_map.get(
+            action,
+            (200, "info", f"Import terminé (action={action}) : {title}")
+        )
+        _log_block(logger, level, msg)
 
-
-        elif action == "ignored":
-            logger.info(
-                "\n---------------------------------------------------\n"
-                f" Film ignoré (aucune action requise) : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": True, "result": result}), 204
-
-        elif action == "no_parent_found":
-            logger.warning(
-                "\n---------------------------------------------------\n"
-                f" Parent introuvable pour : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": False, "result": result}), 409
-
-        elif action == "error":
-            logger.error(
-                "\n---------------------------------------------------\n"
-                f" Erreur métier lors du traitement du film : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": False, "result": result}), 422
-
-        else:
-            logger.info(
-                "\n---------------------------------------------------\n"
-                f" Import du film terminé (action inconnue) : {title}\n"
-                "---------------------------------------------------"
-            )
-            return jsonify({"ok": True, "result": result}), 200
+        return jsonify({"ok": action != "error", "result": result}), status
 
     except Exception:
         logger.exception("radarr_webhook: unexpected error during processing")
         return jsonify({"ok": False, "error": "internal error"}), 500
+    
+def _log_block(logger, level: str, message: str):
+    LOG_SEPARATOR = "-" * 65
+    log_fn = getattr(logger, level)
+    log_fn("\n%s\n%s\n%s", LOG_SEPARATOR, message, LOG_SEPARATOR)

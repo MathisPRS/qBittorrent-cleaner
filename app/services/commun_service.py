@@ -59,7 +59,6 @@ class CommunService:
     # -----------------------------
     # BDD helpers
     # -----------------------------
-
     def perform_bdd_delete(self, hashes_to_delete: list) -> dict:
        
         if not hashes_to_delete:
@@ -117,25 +116,20 @@ class CommunService:
             "skipped_hashes": skipped_hashes,
         }
     
-    # -----------------------------
-    # Gotify helpers
-    # -----------------------------
     def _send_notify(self,
-                 movie_title: str,
-                 old_torrent: str | None,
-                 new_torrent: str | None,
-                 deleted: list,
-                 not_found: list,
-                 failed: list,
-                 image_url: str | None = None) -> dict:
-      
-        # normaliser listes
+                     movie_title: str,
+                     old_torrent: Optional[str],
+                     new_torrent: Optional[str],
+                     deleted: Optional[list],
+                     not_found: Optional[list],
+                     failed: Optional[list],
+                     image_url: Optional[str] = None) -> dict:
+        
         deleted = deleted or []
         not_found = not_found or []
         failed = failed or []
         movie_title = movie_title or "unknown"
 
-        # titre selon le résultat
         title_map = {
             (True, False, False): "Webhook Cleaner : Nettoyage effectué",
             (False, True, False): "Webhook Cleaner : Nettoyage effectué",
@@ -144,10 +138,11 @@ class CommunService:
             (True, False, True): "Webhook Cleaner : Nettoyage partiel",
             (False, True, True): "Webhook Cleaner : Nettoyage partiel",
             (True, True, True): "Webhook Cleaner : Nettoyage partiel",
+            (False, False, False): "Webhook Cleaner : Ajout du torrent effectué"
         }
         title = title_map.get((bool(deleted), bool(not_found), bool(failed)), "Webhook Cleaner : État inconnu")
 
-        # construire le corps du message
+        # construire le message (compact)
         lines: list[str] = []
         if old_torrent:
             lines.append(f"Old: {old_torrent}")
@@ -159,18 +154,13 @@ class CommunService:
             lines.append("Not found: " + ", ".join(not_found))
         if failed:
             lines.append("Failed (not removed on qB): " + ", ".join(failed))
-
-        # Garder l'URL en texte pour fallback / logs (optionnel)
         if image_url:
-            # n'écrase pas l'attachment: l'adapter se chargera d'uploader le binaire
             lines.append("Image: " + image_url)
 
-        # logs
         preview = (lines[0] + " | " + (lines[1] if len(lines) > 1 else ""))[:300] if lines else ""
         self.logger.info("[Gotify] title=%s preview=%s", title, preview)
         self.logger.debug("[Gotify] full message lines: %s", lines)
 
-        # envoie
         return notify_gotify(title, lines, image_url=image_url)
 
     # -----------------------------
