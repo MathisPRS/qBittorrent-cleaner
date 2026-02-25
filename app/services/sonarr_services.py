@@ -33,7 +33,7 @@ class SonarrService:
         sonarr_id = dto.get("sonarr_id")
         series_title = dto.get("title")
         self._series_image_url = dto.get("image")
-        self._new_torrent_name = self.commun_service.get_torrent_name(dto)
+        self._new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
 
         # Ensure torrent DB row exists (and returns torrent object with id/hash/name)
         torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)

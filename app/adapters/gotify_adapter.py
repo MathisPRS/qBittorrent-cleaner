@@ -16,7 +16,7 @@ class GotifyAdapter:
         self.base_url = (getattr(app_config, "GOTIFY_URL", "") or "").rstrip("/")
         self.token = getattr(app_config, "GOTIFY_TOKEN", "")
         self.priority = int(getattr(app_config, "GOTIFY_PRIO", 5))
-        self.verify_ssl = bool(getattr(app_config, "GOTIFY_VERIFY_SSL", True))
+        self.verify_ssl = bool(getattr(app_config, "VERIFY_SSL", True))
         self.default_title = getattr(app_config, "GOTIFY_TITLE", "Cleaner qBittorrent")
         self.session = requests.Session()
         self._max_image_bytes = int(getattr(app_config, "GOTIFY_MAX_IMAGE_BYTES", 8 * 1024 * 1024))

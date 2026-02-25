@@ -35,7 +35,7 @@ class TorrentsRepo:
             self.logger.exception("[BBDD] get_by_hash failed for %s", hv)
             return None
 
-    def create(self, hashval: str, name: Optional[str] = None) -> Optional[Torrents]:
+    def create(self, hashval: str, name: Optional[str], indexer) -> Optional[Torrents]:
         if not hashval:
             raise ValueError("hashval is required")
         hv = _normalize_hash(hashval)
@@ -44,9 +44,9 @@ class TorrentsRepo:
         if existing:
             return existing
 
-        torrent = Torrents(hash=hv, name=name)
+        torrent = Torrents(hash=hv, name=name, indexer=indexer)
         try:
-            db.session.add(torrent)
+            db.session.add(torrent) 
             db.session.flush()
             db.session.commit()
             self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s", torrent.id, torrent.hash, torrent.name)

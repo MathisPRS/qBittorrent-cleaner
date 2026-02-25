@@ -142,7 +142,6 @@ class CommunService:
         }
         title = title_map.get((bool(deleted), bool(not_found), bool(failed)), "Webhook Cleaner : État inconnu")
 
-        # construire le message (compact)
         lines: list[str] = []
         if old_torrent:
             lines.append(f"Old: {old_torrent}")
@@ -167,18 +166,19 @@ class CommunService:
     # Torrent helpers
     # -----------------------------
     def ensure_torrent_exists(self, torrent_hash: str, name: Optional[str] = None):
-        """
-        Ensure a Torrents DB row exists for hash. Return the Torrents instance.
-        """
+        
         torrent = self.torrent_repo.get_by_hash(torrent_hash)
         if torrent:
             self.logger.debug("ensure_torrent_exists: existing torrent id=%s hash=%s", torrent.id, torrent.hash)
             return torrent
 
         self.logger.info("ensure_torrent_exists: creating torrent hash=%s name=%s", torrent_hash, name)
-        return self.torrent_repo.create(hashval=torrent_hash, name=name)
+        # Get indexer name
+        indexer = self.qb.get_indexer_from_hash(torrent_hash)
+        torrent_created = self.torrent_repo.create(hashval=torrent_hash, name=name, indexer=indexer)
+        return torrent_created
     
-    def get_torrent_name(self, dto: dict) -> str | None:
+    def get_torrent_name_from_json(self, dto: dict) -> str | None:
         release = dto.get("torrent")
         source_path = release.get("sourcePath")
         if source_path:

@@ -32,7 +32,7 @@ class RadarrService:
         radarr_id = dto.get("radarr_id")
         title = dto.get("title")
         self._movie_image_url = dto.get("image")
-        self._new_torrent_name = self.commun_service.get_torrent_name(dto)
+        self._new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
         # Ensure torrent exist
         torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)
         self._new_torrent = torrent

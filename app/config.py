@@ -24,7 +24,7 @@ WERK_LEVEL  = (cfg.get("logging", "WERKZEUG_LEVEL", fallback="WARNING") or "WARN
 LOG_LEVEL   = (cfg.get("general", "LOG_LEVEL", fallback="INFO") or "INFO").upper()
 
 # qBittorrent
-QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrrent8080").rstrip("/")
+QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrrent:8080").rstrip("/")
 QBIT_USER = cfg.get("qbittorrent", "USER" )
 QBIT_PASS = cfg.get("qbittorrent", "PASS")
 
@@ -34,7 +34,7 @@ GOTIFY_URL     = (cfg.get("gotify", "URL", fallback="")).rstrip("/")
 GOTIFY_TOKEN   = cfg.get("gotify", "TOKEN", fallback="")
 GOTIFY_PRIO    = int(cfg.get("gotify", "PRIORITY", fallback="5"))
 GOTIFY_TITLE   = cfg.get("gotify", "TITLE", fallback="Cleaner qBittorrent")
-GOTIFY_VERIFY_SSL = getbool("gotify", "VERIFY_SSL", True)
+VERIFY_SSL = getbool("gotify", "VERIFY_SSL", True)
 
 
 # Sonarr (pour builder uniquement)
@@ -55,11 +55,6 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_ECHO = getbool("database", "ECHO", False)
 
 def configure_app(app, config_filename: str | None = None):
-    """
-    Applique la config sur l'objet Flask. Si config_filename fourni,
-    on peut l'utiliser pour surcharger (optionnel).
-    """
-    # valeurs depuis ce module
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
     app.config["SQLALCHEMY_ECHO"] = SQLALCHEMY_ECHO
