@@ -43,13 +43,16 @@ class TorrentsRepo:
         existing = self.get_by_hash(hv)
         if existing:
             return existing
+        
+        if not indexer:
+            indexer= "no indexer"
 
         torrent = Torrents(hash=hv, name=name, indexer=indexer)
         try:
             db.session.add(torrent) 
             db.session.flush()
             db.session.commit()
-            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s", torrent.id, torrent.hash, torrent.name)
+            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s indexer=%s", torrent.id, torrent.hash, torrent.name, torrent.indexer)
             return torrent
         except Exception:
             self.logger.exception("[BBDD] create torrent failed for %s", hv)

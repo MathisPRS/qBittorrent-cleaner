@@ -17,7 +17,7 @@ class CommunService:
         self.logger = get_logger(__name__, app=app)
         self.torrent_repo = TorrentsRepo()
         self.movie_repo = MoviesRepo()
-        self.qb = QbittorrentAdapter(QBIT_HOST, QBIT_USER, QBIT_PASS, logger_obj=self.logger)
+        self.qb = QbittorrentAdapter()
 
     # -----------------------------
     # qBittorrent helpers

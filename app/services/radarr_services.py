@@ -17,7 +17,7 @@ class RadarrService:
         self.torrents_repo = TorrentsRepo()
         self.movies_repo = MoviesRepo()
         self.commun_service = CommunService(app)
-        self.qb = QbittorrentAdapter(QBIT_HOST, QBIT_USER, QBIT_PASS, logger_obj=self.logger)
+        self.qb = QbittorrentAdapter()
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None
         self._movie_image_url: Optional[str] = None

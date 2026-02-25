@@ -17,7 +17,7 @@ class SonarrService:
         self.torrents_repo = TorrentsRepo()
         self.series_repo = SeriesRepo()
         self.episodes_repo = EpisodesRepo()
-        self.qb_adapter = QbittorrentAdapter(QBIT_HOST, QBIT_USER, QBIT_PASS, logger_obj=self.logger)
+        self.qb_adapter = QbittorrentAdapter()
         self.commun_service = CommunService(app)
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None

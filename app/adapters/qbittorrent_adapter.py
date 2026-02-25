@@ -157,6 +157,11 @@ class QbittorrentAdapter:
         if not torrent_hash:
             self.logger.info("[qBittorrent] no hash given, cannot search torrent indexer")
             return None
+        try:
+            self.login()
+        except Exception:
+            self.logger.exception("[qBittorrent] get_indexer_from_hash: login failed")
+            return None
 
         try:
             trackers = self.client.torrents_trackers(torrent_hash=torrent_hash)
