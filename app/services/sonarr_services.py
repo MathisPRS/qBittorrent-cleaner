@@ -5,8 +5,6 @@ from ..repositories.series_repo import SeriesRepo
 from ..repositories.episodes_repo import EpisodesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
 from ..services.commun_service import CommunService
-from ..extensions import db
-from ..config import QBIT_HOST, QBIT_PASS, QBIT_USER
 from app.logger import get_logger
 
 
@@ -102,6 +100,7 @@ class SonarrService:
                 )
 
         return created
+    
 
     def update_existing_series_episodes(self, series_obj, new_torrent, dto: Dict) -> Dict:
         hashes_to_delete: List[str] = []
@@ -134,7 +133,7 @@ class SonarrService:
                 created_episodes.append(ep_key)
             elif action == "updated":
                 updated_episodes.append(ep_key)
-                old_hashes = result.get("hashes_to_delete", [])
+                old_hashes = result.get("hashes_to_delete", []) or []
                 for h in old_hashes:
                     if not h:
                         continue
@@ -158,47 +157,44 @@ class SonarrService:
                 "failed_episodes": failed_episodes
             }
 
-        # If hashes to delete -> perform qB deletion and DB deletion using CommunService
-        qb_out = self.commun_service.perform_qbittorrent_delete(hashes_to_delete) or {}
-        deleted = qb_out.get("deleted", [])
-        failed = qb_out.get("failed", [])
-        absent = qb_out.get("absent", [])
-        hashes_for_db = qb_out.get("hashes_to_delete_in_db", [])
-
+        # Partition ready vs deferred and enqueue deferred ones inside filter_deferred_deletion_hash
         try:
-            db_result = self.commun_service.perform_bdd_delete(hashes_for_db)
+            ready_to_be_deleted = self.commun_service.filter_deferred_deletion_hash(hashes_to_delete)
         except Exception:
-            self.logger.exception("update_existing_series_episodes: perform_bdd_delete failed")
-            db_result = {"deleted_total": 0}
+            self.logger.exception("update_existing_series_episodes: filter_deferred_deletion_hash failed")
+            # fallback conservative: attempt to delete everything
+            ready_to_be_deleted = list(hashes_to_delete)
 
-        # prepare notification lists
-        deleted_names = [n for (_h, n) in deleted if n]
-        absent_names = list(absent) if absent else []
-        failed_names = [n for (_h, n) in failed if n]
-
-        # send notification using common service helper (clean positional args)
-        try:
-            self.commun_service._send_notify(
-                series_obj.title,
-                self._old_torrent_name,
-                self._new_torrent_name,
-                deleted_names,
-                created_episodes,   # not_found / newly created episodes
-                failed_names,
-                self._series_image_url
+        if not ready_to_be_deleted:
+            self.logger.info(
+                "update_existing_series_episodes: no hashes ready for immediate deletion (all deferred for later cleanup)"
             )
-        except Exception:
-            self.logger.exception("update_existing_series_episodes: notify failed (non-blocking)")
 
-        return {
-            "action": "replace_and_cleanup",
-            "series_id": series_obj.id,
-            "new_torrent_id": self._new_torrent.id,
-            "deleted_db_rows": db_result.get("deleted_total", 0),
-            "deleted_episodes": updated_episodes,
-            "created_episodes": created_episodes,
-            "failed_episodes": failed_episodes
-        }
+            try:
+                self.commun_service._send_notify(
+                    series_obj.title,
+                    self._old_torrent_name,
+                    self._new_torrent_name,
+                    deleted=[],            # nothing deleted now
+                    not_found=created_episodes,
+                    failed=[],
+                    image_url=self._series_image_url
+                )
+            except Exception:
+                self.logger.exception("update_existing_series_episodes: notify failed (non-blocking)")
+
+            return {
+                "action": "sync_completed_deferred",
+                "series_id": series_obj.id,
+                "updated_episodes": updated_episodes,
+                "created_episodes": created_episodes,
+                "failed_episodes": failed_episodes,
+                "note": "all_hashes_deferred"
+            }
+
+        # Delete ready hashes and notify (single helper)
+        return self.delete_ready_hashes_and_notify(ready_to_be_deleted, series_obj, new_torrent, updated_episodes, created_episodes, failed_episodes)
+    
 
     def process_single_episode(self, series_obj, season: int, episode_num: int, payload_ep: Dict, new_torrent) -> Dict:
         ep_identifier = f"S{season:02d}E{episode_num:02d}"
@@ -237,31 +233,34 @@ class SonarrService:
         # episode exists -> check current latest torrent hash
         current_hash = None
         if existing.latest_torrent_id:
-            cur_t = self.torrents_repo.get_by_id(existing.latest_torrent_id)
-            if cur_t:
-                current_hash = getattr(cur_t, "hash", None)
-                self._old_torrent_name = getattr(cur_t, "name", None)
+            try:
+                cur_t = self.torrents_repo.get_by_id(existing.latest_torrent_id)
+                if cur_t:
+                    current_hash = getattr(cur_t, "hash", None)
+                    self._old_torrent_name = getattr(cur_t, "name", None)
+            except Exception:
+                self.logger.exception("process_single_episode: failed to load current torrent for episode %s", ep_identifier)
 
         new_hash = getattr(new_torrent, "hash", None)
         if current_hash and new_hash and current_hash.strip().lower() == new_hash.strip().lower():
             self.logger.debug("process_single_episode: episode %s unchanged (hash match)", ep_identifier)
             return {"action": "same"}
 
-        # update latest_torrent_id to new torrent
+        # update latest_torrent_id to new torrent via repo (no direct db.session)
         old_torrent_id = existing.latest_torrent_id
-        existing.latest_torrent_id = new_torrent.id
         try:
-            db.session.add(existing)
-            db.session.commit()
-            self.logger.info("process_single_episode: updated episode %s to new torrent id=%s", ep_identifier, new_torrent.id)
+            updated = self.episodes_repo.update_latest_torrent_id(existing.id, new_torrent.id)
+            if not updated:
+                self.logger.warning(
+                    "process_single_episode: update affected 0 rows when updating episode id=%s", getattr(existing, "id", None)
+                )
+            else:
+                self.logger.info("process_single_episode: updated episode %s to new torrent id=%s", ep_identifier, new_torrent.id)
         except Exception:
-            self.logger.exception("process_single_episode: DB commit failed when updating episode %s", ep_identifier)
-            try:
-                db.session.rollback()
-            except Exception:
-                self.logger.exception("process_single_episode: rollback failed after commit error")
+            self.logger.exception("process_single_episode: DB update failed when updating episode %s", ep_identifier)
             return {"action": "error"}
 
+        # collect hashes to delete for old torrent id (old + cross-seeds)
         hashes_to_delete: List[str] = []
         if old_torrent_id:
             try:
@@ -279,3 +278,50 @@ class SonarrService:
                 )
 
         return {"action": "updated", "hashes_to_delete": hashes_to_delete}
+    
+    
+    def delete_ready_hashes_and_notify(self, ready_hashes: List[str], series_obj, new_torrent, updated_episodes: List[str], created_episodes: List[str], failed_episodes: List[str]) -> Dict:
+      
+        try:
+            qb_out = self.commun_service.perform_qbittorrent_delete(ready_hashes) or {}
+        except Exception:
+            self.logger.exception("delete_ready_hashes_and_notify: perform_qbittorrent_delete failed")
+            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
+
+        deleted = qb_out.get("deleted", [])
+        failed = qb_out.get("failed", [])
+        absent = qb_out.get("absent", [])
+        hashes_for_db = qb_out.get("hashes_to_delete_in_db", []) or []
+
+        try:
+            db_result = self.commun_service.perform_bdd_delete(hashes_for_db)
+        except Exception:
+            self.logger.exception("delete_ready_hashes_and_notify: perform_bdd_delete failed")
+            db_result = {"deleted_total": 0}
+
+        deleted_names = [n for (_h, n) in deleted if n]
+        absent_names = list(absent) if absent else []
+        failed_names = [n for (_h, n) in failed if n]
+
+        try:
+            self.commun_service._send_notify(
+                series_obj.title,
+                self._old_torrent_name,
+                self._new_torrent_name,
+                deleted_names,
+                created_episodes,   # not_found / newly created episodes
+                failed_names,
+                self._series_image_url
+            )
+        except Exception:
+            self.logger.exception("delete_ready_hashes_and_notify: notify failed (non-blocking)")
+
+        return {
+            "action": "replace_and_cleanup",
+            "series_id": series_obj.id,
+            "new_torrent_id": getattr(self._new_torrent, "id", None) or getattr(new_torrent, "id", None),
+            "deleted_db_rows": db_result.get("deleted_total", 0),
+            "deleted_episodes": updated_episodes,
+            "created_episodes": created_episodes,
+            "failed_episodes": failed_episodes
+        }
