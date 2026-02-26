@@ -39,10 +39,23 @@ def sonarr_webhook(request, app):
         }), 400
 
     # Ignore non-actionable events
-    if not episodes or not episode_files or not download_id:
+    missing_actionable = []
+
+    if not episodes:
+        missing_actionable.append("episodes")
+
+    if not episode_files:
+        missing_actionable.append("episodeFiles")
+
+    if not download_id:
+        missing_actionable.append("downloadId")
+
+    if missing_actionable:
         logger.info(
-            "sonarr_webhook: missing actionable data — ignoring event (series=%s sonarr_id=%s)",
-            title, sonarr_id
+            "sonarr_webhook: ignoring event — missing actionable fields=%s (series=%s sonarr_id=%s)",
+            missing_actionable,
+            title,
+            sonarr_id
         )
         return jsonify({"ok": False, "message": "ignored"}), 200
 
