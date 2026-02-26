@@ -1,4 +1,5 @@
 # app/repositories/torrents_repo.py
+from datetime import datetime
 from typing import Optional, List, Set, Iterable
 from sqlalchemy.exc import SQLAlchemyError
 from app.logger import get_logger
@@ -181,3 +182,13 @@ class TorrentsRepo:
             except Exception:
                 self.logger.exception("[BBDD] rollback failed after set_cross_seed_parent error")
             return None
+        
+    def get_attr_created_at_by_hash(self, torrent_hash: str) -> Optional[datetime]:
+        if not torrent_hash:
+            return None
+        try:
+            row = db.session.query(Torrents.created_at).filter(Torrents.hash == torrent_hash).one_or_none()
+            return getattr(row, "created_at", None) if row is not None else None
+        except Exception:
+            # log upstream; repo stays minimal
+            raise

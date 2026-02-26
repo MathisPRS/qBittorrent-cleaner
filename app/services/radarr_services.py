@@ -119,25 +119,75 @@ class RadarrService:
                 self.logger.exception("update_existing_movie: rollback failed after commit error")
             return {"action": "error", "message": "db_commit_failed", "movie_id": movie.id}
 
-        # Collect hashes to delete (old + cross-seeds)
+          # Collect hashes to delete (old + cross-seeds)
         try:
             hashes_to_delete = self.torrents_repo.find_hashes_to_delete(old_torrent_id)
         except Exception:
-            self.logger.exception("update_existing_movie: failed to collect hashes_to_delete for old_torrent_id=%s", old_torrent_id)
+            self.logger.exception(
+                "update_existing_movie: failed to collect hashes_to_delete for old_torrent_id=%s", old_torrent_id
+            )
             return {"action": "error", "message": "failed_collect_hashes", "movie_id": movie.id}
 
         if not hashes_to_delete:
-            self.logger.error("update_existing_movie: no hashes found for old_torrent_id=%s", old_torrent_id)
-            return {"action": "updated", "movie_id": movie.id, "new_torrent_id": new_torrent.id, "note": "no_hashes_found_for_old_torrent"}
+            self.logger.error(
+                "update_existing_movie: no hashes found for old_torrent_id=%s", old_torrent_id
+            )
+            return {
+                "action": "updated",
+                "movie_id": movie.id,
+                "new_torrent_id": new_torrent.id,
+                "note": "no_hashes_found_for_old_torrent"
+            }
 
-        # Delete from qBittorrent and gather results
-        qb_out = self.commun_service.perform_qbittorrent_delete(hashes_to_delete) or {}
+        # Split between ready now and deferred (filter_deferred_deletion_hash will enqueue deferred ones)
+        try:
+            ready_to_be_deleted = self.commun_service.filter_deferred_deletion_hash(hashes_to_delete)
+        except Exception:
+            self.logger.exception("update_existing_movie: filter_deferred_deletion_hash failed")
+            # conservative fallback: try to delete everything (we don't want to silently leak)
+            ready_to_be_deleted = list(hashes_to_delete)
+
+        if not ready_to_be_deleted:
+            # nothing ready now — everything deferred
+            self.logger.info(
+                "update_existing_movie: no hashes ready for immediate deletion (all deferred for later cleanup)"
+            )
+
+            # send a lighter notification indicating deferred cleanup happened (optional)
+            try:
+                self.commun_service._send_notify(
+                    movie.title,
+                    self._old_torrent_name or "—",
+                    self._new_torrent_name,
+                    deleted=[],           # nothing deleted now
+                    not_found=[],         # nothing newly created now
+                    failed=[],            # nothing failed now
+                    image_url=self._movie_image_url
+                )
+            except Exception:
+                self.logger.exception("update_existing_movie: notify failed (non-blocking)")
+
+            return {
+                "action": "updated",
+                "movie_id": movie.id,
+                "new_torrent_id": new_torrent.id,
+                "note": "all_hashes_deferred"
+            }
+
+        # Delete only the ready hashes from qBittorrent and then from DB
+        qb_out = {}
+        try:
+            qb_out = self.commun_service.perform_qbittorrent_delete(ready_to_be_deleted) or {}
+        except Exception:
+            self.logger.exception("update_existing_movie: perform_qbittorrent_delete failed")
+            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
+
         deleted = qb_out.get("deleted", [])
         failed = qb_out.get("failed", [])
         absent = qb_out.get("absent", [])
-        hashes_for_db = qb_out.get("hashes_to_delete_in_db", [])
+        hashes_for_db = qb_out.get("hashes_to_delete_in_db", []) or []
 
-        # Delete old torrent(s) from DB
+        # Delete old torrent(s) from DB for the hashes qBittorrent confirmed
         try:
             db_result = self.commun_service.perform_bdd_delete(hashes_for_db)
         except Exception:

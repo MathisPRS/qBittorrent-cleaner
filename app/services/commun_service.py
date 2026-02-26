@@ -1,7 +1,11 @@
+from datetime import datetime, timedelta
 import os
-from typing import Optional
+from typing import List, Optional
+
+from sqlalchemy import Tuple
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
+from ..repositories.deferred_deletions_repo import DeferredDeletionsRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
 from ..adapters.gotify_adapter import notify_gotify
 from ..extensions import db
@@ -17,7 +21,9 @@ class CommunService:
         self.logger = get_logger(__name__, app=app)
         self.torrent_repo = TorrentsRepo()
         self.movie_repo = MoviesRepo()
+        self.deferred_deletion_repo = DeferredDeletionsRepo()
         self.qb = QbittorrentAdapter()
+        self.delta = timedelta(hours=48)
 
     # -----------------------------
     # qBittorrent helpers
@@ -116,6 +122,134 @@ class CommunService:
             "skipped_hashes": skipped_hashes,
         }
     
+    # -----------------------------
+    # Deferred_deletion helpers
+    # -----------------------------
+    def filter_deferred_deletion_hash(self, candidate_hashes: List[str]) -> List[str]:
+        if not candidate_hashes:
+            return []
+
+        ready_to_delete: List[str] = []
+        seen = set()
+
+        for h in candidate_hashes:
+            nh = (h or "").strip().lower()
+            if not nh or nh in seen:
+                continue
+            seen.add(nh)
+
+            try:
+                can_delete = self.calculate_delta(nh)
+            except Exception:
+                self.logger.exception("filter_deferred_deletion_hash: calculate_delta failed for hash=%s -> marking ready", nh)
+                can_delete = True
+
+            if can_delete:
+                ready_to_delete.append(nh)
+                continue
+
+            name = None
+            try:
+                info = self.torrent_repo.get_by_hash(nh)
+                name = getattr(info, "name", None)
+            except Exception:
+                # best-effort: if we can't read name, proceed with None
+                self.logger.debug("filter_deferred_deletion_hash: failed to resolve name for hash=%s", nh)
+
+            # do migration (create deferred row + remove torrent row)
+            try:
+                self.migrate_deferred_torrent(nh, name=name)
+            except Exception:
+                # do not break the loop; log and continue
+                self.logger.exception("filter_deferred_deletion_hash: migrate_deferred_torrent failed for hash=%s", nh)
+
+        self.logger.info("filter_deferred_deletion_hash: ready_to_delete_count=%d deferred_count=%d", len(ready_to_delete), len(seen) - len(ready_to_delete))
+        return ready_to_delete
+
+
+    def calculate_delta(self, torrent_hash: str) -> bool:
+        if not torrent_hash:
+            self.logger.debug("calculate_delta: empty hash -> considered ready")
+            return True
+
+        try:
+            created_at = self.torrent_repo.get_attr_created_at_by_hash(torrent_hash)
+        except Exception:
+            # si la lecture DB échoue, on évite de bloquer la suppression:
+            self.logger.exception("calculate_delta: failed to fetch created_at for hash=%s -> consider ready", torrent_hash)
+            return True
+
+        if created_at is None:
+            # pas d'info en DB : considérer prêt à suppression (on ne bloque pas)
+            self.logger.debug("calculate_delta: no created_at for hash=%s -> considered ready", torrent_hash)
+            return True
+
+        # normalize timezone-aware -> naive UTC for comparison
+        ca = created_at
+        if getattr(ca, "tzinfo", None):
+            try:
+                ca = ca.astimezone(tz=None).replace(tzinfo=None)
+            except Exception:
+                # fallback keep as-is
+                pass
+
+        now = datetime.utcnow()
+        age = now - ca
+        ready = age >= self.delta
+        self.logger.debug(
+            "calculate_delta: hash=%s created_at=%s age=%s ready=%s",
+            torrent_hash, ca.isoformat(), age, ready
+        )
+        return ready
+    
+    
+    def migrate_deferred_torrent(self, torrent_hash: str, name: Optional[str] = None) -> None:
+        if not torrent_hash:
+            self.logger.debug("migrate_deferred_torrent: empty hash -> skip")
+            return
+
+        now = datetime.utcnow()
+        try:
+            created_at = self.torrent_repo.get_attr_created_at_by_hash(torrent_hash)
+        except Exception:
+            self.logger.exception("migrate_deferred_torrent: failed to read created_at for hash=%s", torrent_hash)
+            created_at = None
+
+        if created_at:
+            ca = created_at
+            if getattr(ca, "tzinfo", None):
+                try:
+                    ca = ca.astimezone(tz=None).replace(tzinfo=None)
+                except Exception:
+                    pass
+            can_be_deleted_at = ca + self.delta
+        else:
+            can_be_deleted_at = now + self.delta
+
+        try:
+            # méthode attendue dans deferred_repo : create_if_not_exists(torrent_hash, name, can_be_deleted_at)
+            created = self.deferred_deletion_repo.create_if_not_exists(torrent_hash=torrent_hash, name=name, can_be_deleted_at=can_be_deleted_at)
+            if created:
+                self.logger.info("migrate_deferred_torrent: deferred row created for hash=%s can_be=%s", torrent_hash, can_be_deleted_at)
+            else:
+                self.logger.debug("migrate_deferred_torrent: deferred row already exists for hash=%s", torrent_hash)
+        except Exception:
+            self.logger.exception("migrate_deferred_torrent: failed to create deferred row for hash=%s", torrent_hash)
+
+        # remove Torrent row (best-effort)
+        try:
+            rows = self.torrent_repo.delete_by_hash(torrent_hash)
+            if rows:
+                self.logger.info("migrate_deferred_torrent: removed torrent row for hash=%s rows=%s", torrent_hash, rows)
+            else:
+                self.logger.debug("migrate_deferred_torrent: no torrent row removed for hash=%s", torrent_hash)
+        except Exception:
+            self.logger.exception("migrate_deferred_torrent: failed to delete torrent row for hash=%s", torrent_hash)
+
+    
+    # -----------------------------
+    # Gotify helpers
+    # ----------------------------- 
     def _send_notify(self,
                      movie_title: str,
                      old_torrent: Optional[str],

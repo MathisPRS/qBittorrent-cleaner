@@ -8,7 +8,7 @@ URL = "http://127.0.0.1:8124/api/radarr"  # adapte si besoin
 payload = {
   "movie": {
     "id": 789,
-    "title": "test-mathis-indexer",
+    "title": "Ratatouille 2: The Cheese Strikes Back",
     "year": 2012,
     "releaseDate": "2013-02-06",
     "folderPath": "/nas-omv/Films/Ratatouille 2: The Cheese Strikes Back (2012)",
@@ -52,12 +52,12 @@ payload = {
       "videoDynamicRange": "",
       "videoDynamicRangeType": ""
     },
-    "sourcePath": "/nas-omv/Downloads/Complet/films/Test-mathis-indexer-1080P"
+    "sourcePath": "/nas-omv/Downloads/Complet/films/Ratatouille 2: The Cheese Strikes Back.mkv"
   },
   "isUpgrade": False,
   "downloadClient": "qBittorrent (films)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "0fe4691c738995491759aa336d8029fa2e902f7d",
+  "downloadId": "95a2k91c738995491759aa336d8029fa2e902f7d",
   "customFormatInfo": {
     "customFormats": [
       {"id": 13, "name": "1080p"},
@@ -69,7 +69,7 @@ payload = {
     "customFormatScore": 5500
   },
   "release": {
-    "releaseTitle": "Ratatouille 2: The Cheese Strikes Back jojeujik NEW 5.1-MM91",
+    "releaseTitle": "Ratatouille 2: The Cheese Strikes Back",
     "indexer": "Ygégé (Prowlarr)",
     "size": 2630667520,
     "indexerFlags": []
