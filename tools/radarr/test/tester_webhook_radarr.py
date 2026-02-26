@@ -52,12 +52,12 @@ payload = {
       "videoDynamicRange": "",
       "videoDynamicRangeType": ""
     },
-    "sourcePath": "/nas-omv/Downloads/Complet/films/Taken 2 (2012) Version Non Censurée MULTi VFF 1080p 10bit HDLight BluRay x265 AC3 5.1-MM91.mkv"
+    "sourcePath": "/nas-omv/Downloads/Complet/films/Ratatouille 2: The Cheese Strikes Back.mkv"
   },
   "isUpgrade": False,
   "downloadClient": "qBittorrent (films)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "131fb13ty8974cf4agy_d9cda5fad89agsf4c4c1",
+  "downloadId": "95a2k91c738995491759aa336d8029fa2e902f7d",
   "customFormatInfo": {
     "customFormats": [
       {"id": 13, "name": "1080p"},
@@ -69,7 +69,7 @@ payload = {
     "customFormatScore": 5500
   },
   "release": {
-    "releaseTitle": "Ratatouille 2: The Cheese Strikes Back jojeujik NEW 5.1-MM91",
+    "releaseTitle": "Ratatouille 2: The Cheese Strikes Back",
     "indexer": "Ygégé (Prowlarr)",
     "size": 2630667520,
     "indexerFlags": []

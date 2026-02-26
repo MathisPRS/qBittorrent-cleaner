@@ -1,4 +1,5 @@
 # app/repositories/torrents_repo.py
+from datetime import datetime
 from typing import Optional, List, Set, Iterable
 from sqlalchemy.exc import SQLAlchemyError
 from app.logger import get_logger
@@ -35,7 +36,7 @@ class TorrentsRepo:
             self.logger.exception("[BBDD] get_by_hash failed for %s", hv)
             return None
 
-    def create(self, hashval: str, name: Optional[str] = None) -> Optional[Torrents]:
+    def create(self, hashval: str, name: Optional[str], indexer) -> Optional[Torrents]:
         if not hashval:
             raise ValueError("hashval is required")
         hv = _normalize_hash(hashval)
@@ -43,13 +44,16 @@ class TorrentsRepo:
         existing = self.get_by_hash(hv)
         if existing:
             return existing
+        
+        if not indexer:
+            indexer= "no indexer"
 
-        torrent = Torrents(hash=hv, name=name)
+        torrent = Torrents(hash=hv, name=name, indexer=indexer)
         try:
-            db.session.add(torrent)
+            db.session.add(torrent) 
             db.session.flush()
             db.session.commit()
-            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s", torrent.id, torrent.hash, torrent.name)
+            self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s indexer=%s", torrent.id, torrent.hash, torrent.name, torrent.indexer)
             return torrent
         except Exception:
             self.logger.exception("[BBDD] create torrent failed for %s", hv)
@@ -178,3 +182,13 @@ class TorrentsRepo:
             except Exception:
                 self.logger.exception("[BBDD] rollback failed after set_cross_seed_parent error")
             return None
+        
+    def get_attr_created_at_by_hash(self, torrent_hash: str) -> Optional[datetime]:
+        if not torrent_hash:
+            return None
+        try:
+            row = db.session.query(Torrents.created_at).filter(Torrents.hash == torrent_hash).one_or_none()
+            return getattr(row, "created_at", None) if row is not None else None
+        except Exception:
+            # log upstream; repo stays minimal
+            raise
