@@ -213,5 +213,5 @@ class RadarrService:
             "movie_id": movie.id,
             "old_torrent_id": old_torrent_id,
             "new_torrent_id": new_torrent.id,
-            "deleted_db_rows": result["deleted_total"]
+            "deleted_db_rows": result["db_result"]["deleted_total"]
         }

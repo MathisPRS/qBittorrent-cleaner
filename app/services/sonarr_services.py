@@ -288,7 +288,7 @@ class SonarrService:
         deleted_names = result["deleted_names"]
         absent_names = result["absent_names"]
         failed_names = result["failed_names"]
-        deleted_db_rows = result["deleted_total"]
+        deleted_db_rows = result["db_result"]["deleted_total"]
 
         try:
             self.commun_service._send_notify(
