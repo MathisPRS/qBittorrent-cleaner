@@ -2,7 +2,7 @@ name: webhook-cleaner-stack
 
 networks:
   media_net:
-    external: false
+    external: true
     name: media_net
 
 services:
