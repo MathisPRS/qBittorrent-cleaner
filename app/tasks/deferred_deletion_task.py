@@ -5,21 +5,14 @@ from app.logger import get_logger
 
 from ..services.deferred_deletion_services import DeferredDeletionService
 
-
 logger = get_logger(__name__)
-
 
 @shared_task(name="app.tasks.deferred_tasks.run_deferred_deletions", bind=False)
 def run_deferred_deletions(batch_size: int = 50):
-    """
-    Celery task that runs the DeferredDeletionService to process due deletions.
-    Called by Celery Beat every 2 hours.
-    """
-    # We need app context to access DB and CommunService (which may rely on current_app config)
+    
     app = current_app._get_current_object() if current_app else None
     if app is None:
         logger.error("run_deferred_deletions: no Flask current_app available in worker context")
-        # In many setups current_app is available; if not, consider passing app config into the worker at startup
         return {"error": "no_app_context"}
 
     svc = DeferredDeletionService(app=app)

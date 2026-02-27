@@ -6,3 +6,5 @@ python-dotenv      # pratique pour charger .env en dev
 psycopg2-binary
 requests
 qbittorrent-api
+celery
+redis

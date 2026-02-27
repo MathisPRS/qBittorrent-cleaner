@@ -2,154 +2,141 @@
 from typing import List, Dict
 from datetime import datetime
 from flask import current_app
-from app.logger import get_logger
 
+from app.logger import get_logger
 from ..repositories.deferred_deletions_repo import DeferredDeletionsRepo
 from ..services.commun_service import CommunService
 
 
-class DeferredDeletionService:
+logger = get_logger(__name__)
 
+
+class DeferredDeletionService:
     def __init__(self, app=None):
         self.app = app or current_app._get_current_object()
         self.logger = get_logger(__name__, app=self.app)
         self.deferred_repo = DeferredDeletionsRepo()
         self.commun_service = CommunService(self.app)
 
+    def _now_utc(self) -> datetime:
+        return datetime.utcnow()
 
+    def _is_deletable(self, can_be_deleted_at) -> bool:
+        if not can_be_deleted_at:
+            return True
+        cb = can_be_deleted_at
+        try:
+            if getattr(cb, "tzinfo", None):
+                cb = cb.astimezone(tz=None).replace(tzinfo=None)
+        except Exception:
+            self.logger.exception("_is_deletable: tz normalize failed for %s", can_be_deleted_at)
+            return True
+        return cb <= self._now_utc()
 
-    def process_once(self, batch_size: int = 100) -> Dict:
-        summary = {
-            "fetched_rows": 0,
-            "candidate_hashes": [],
-            "deletable_hashes": [],
-            "deletion_summary": {}
-        }
+    def _collect_deletable_hashes(self, rows) -> List[str]:
+        hashes: List[str] = []
+        seen = set()
+        for row in rows:
+            h = (getattr(row, "torrent_hash", "") or "").strip().lower()
+            if not h or h in seen:
+                continue
+            if self._is_deletable(getattr(row, "can_be_deleted_at", None)):
+                seen.add(h)
+                hashes.append(h)
+        return hashes
+    
+
+    def _notify_deferred_deletion(self, deleted_raw, failed_raw, absent_raw) -> bool:
+        try:
+            # build names lists if pairs (hash,name) provided, else empty lists
+            deleted_names = [name for (_h, name) in deleted_raw] if deleted_raw and isinstance(deleted_raw[0], (list, tuple)) else []
+            failed_names = [name for (_h, name) in failed_raw] if failed_raw and isinstance(failed_raw[0], (list, tuple)) else []
+            absent_names = list(absent_raw or [])
+            # generic notify: title + placeholders
+            self.commun_service._send_notify("Deferred deletions", "—", "—", deleted_names, [], failed_names, None)
+            return True
+        except Exception:
+            self.logger.exception("_notify_deferred_deletion: notify failed")
+            return False
+        
+    def extract_hashes(self, m):
+        if not m:
+            return []
+        first = m[0]
+        if isinstance(first, (list, tuple)):
+            return [h for (h, _n) in m if h]
+        return [h for h in m if h]
+
+    def perform_deletion_deferred(self, hashes: List[str], notify: bool = True) -> Dict:
+        result = {"requested": len(hashes), "qb_deleted": [], "qb_absent": [], "qb_failed": [], "removed_deferred": 0, "notify_sent": False}
+
+        if not hashes:
+            self.logger.debug("perform_deletion_deferred: no hashes")
+            return result
+
+        # qBittorrent Deletion
+        qb_out = None
+        try:
+            qb_out = self.commun_service.perform_qbittorrent_delete(hashes)
+        except Exception:
+            self.logger.exception("perform_deletion_deferred: qb delete failed")
+            return result
+
+        deleted_raw = qb_out.get("deleted", []) or []
+        failed_raw = qb_out.get("failed", []) or []
+        absent_raw = qb_out.get("absent", []) or []
+
+       
+
+        qb_deleted = self.extract_hashes(deleted_raw)
+        qb_failed = self.extract_hashes(failed_raw)
+        qb_absent = self.extract_hashes(absent_raw)
+
+        result["qb_deleted"] = qb_deleted
+        result["qb_failed"] = qb_failed
+        result["qb_absent"] = qb_absent
+
+        # 2) remove deferred rows for deleted or absent
+        hashes_to_remove = list(set(qb_deleted + qb_absent))
+        if hashes_to_remove:
+            try:
+                removed = self.deferred_repo.delete_many(hashes_to_remove)
+                result["removed_deferred"] = int(removed)
+                self.logger.info("perform_deletion_deferred: removed %d deferred rows", removed)
+            except Exception:
+                self.logger.exception("perform_deletion_deferred: failed to remove deferred rows %s", hashes_to_remove)
+
+        # 3) notify via separate method
+        if notify:
+            notified = self._notify_deferred_deletion(deleted_raw, failed_raw, qb_absent)
+            result["notify_sent"] = bool(notified)
+
+        return result
+
+    def process_once(self, batch_size: int = 100, notify: bool = True) -> Dict:
+        summary = {"fetched": 0, "candidates": [], "deletable": [], "deletion": None}
 
         try:
             rows = self.deferred_repo.get_due(limit=batch_size)
         except Exception:
-            self.logger.exception("process_once: deferred_repo.get_due failed")
+            self.logger.exception("process_once: get_due failed")
             return summary
 
         if not rows:
-            self.logger.info("process_once: no deferred deletions found")
+            self.logger.debug("process_once: none due")
             return summary
 
-        summary["fetched_rows"] = len(rows)
-
-        # candidates
-        candidate_hashes = []
-        for r in rows:
-            th = (getattr(r, "torrent_hash", "") or "").strip().lower()
-            if th:
-                candidate_hashes.append(th)
-        summary["candidate_hashes"] = candidate_hashes
-
-        # filter deletable now
+        summary["fetched"] = len(rows)
+        summary["candidates"] = [(getattr(r, "torrent_hash", "") or "").strip().lower() for r in rows]
         deletable = self._collect_deletable_hashes(rows)
-        summary["deletable_hashes"] = deletable
+        summary["deletable"] = deletable
 
         if not deletable:
-            self.logger.info("process_once: no hashes are deletable yet (will keep rows for later)")
+            self.logger.info("process_once: none deletable now (%d rows)", len(rows))
             return summary
 
-        # perform deletions (calls CommunService then repo.delete_many via _perform_deletions)
-        deletion_summary = self._perform_deletions(deletable)
-        summary["deletion_summary"] = deletion_summary
+        deletion_summary = self.perform_deletion_deferred(deletable, notify=notify)
+        summary["deletion"] = deletion_summary
 
-        self.logger.info("process_once: finished summary=%s", summary)
+        self.logger.info("process_once: done summary=%s", summary)
         return summary
-
-    def _is_deletable(self, can_be_deleted_at) -> bool:
-        """
-        True si can_be_deleted_at est passé (UTC).
-        """
-        if not can_be_deleted_at:
-            return True
-        now = datetime.utcnow()
-        # can_be_deleted_at may be timezone-aware; compare naive UTC by normalizing if needed
-        try:
-            c = can_be_deleted_at
-            if getattr(c, "tzinfo", None):
-                # convert to naive UTC for comparison
-                c = c.astimezone(tz=None).replace(tzinfo=None)
-        except Exception:
-            # en cas d'erreur sur tz, on considère deletable pour ne pas bloquer
-            self.logger.exception("_is_deletable: failed to normalize can_be_deleted_at -> consider deletable")
-            return True
-        return c <= now
-
-    def _collect_deletable_hashes(self, rows) -> List[str]:
-        """
-        Parcourt les rows DeferredDeletion, retourne la liste unique des hashes deletable now.
-        """
-        hashes: List[str] = []
-        seen = set()
-        for r in rows:
-            th = (getattr(r, "torrent_hash", "") or "").strip().lower()
-            if not th or th in seen:
-                continue
-            can_be = getattr(r, "can_be_deleted_at", None)
-            if self._is_deletable(can_be):
-                seen.add(th)
-                hashes.append(th)
-        return hashes
-    
-
-    
-
-    def _perform_deletions(self, hashes: List[str]) -> Dict:
-        """
-        Appelle les helpers existants et effectue la suppression en base pour les hashes confirmés.
-        Retourne un résumé.
-        """
-        summary = {
-            "qb_deleted": [],     # list of hashes confirmed deleted by qB
-            "qb_failed": [],      # list of hashes failed at qb
-            "qb_absent": [],      # list of hashes absent at qb
-            "db_deleted_count": 0
-        }
-
-        if not hashes:
-            return summary
-
-        # 1) qBittorrent delete (CommunService doit renvoyer la structure attendue)
-        try:
-            qb_out = self.commun_service.perform_qbittorrent_delete(hashes) or {}
-        except Exception:
-            self.logger.exception("_perform_deletions: perform_qbittorrent_delete raised")
-            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
-
-        # normalize returned lists
-        def _unwrap_pairs(lst):
-            if not lst:
-                return []
-            if isinstance(lst[0], (list, tuple)):
-                return [h for (h, _n) in lst if h]
-            return [h for h in lst if h]
-
-        summary["qb_deleted"] = _unwrap_pairs(qb_out.get("deleted", []))
-        summary["qb_failed"] = _unwrap_pairs(qb_out.get("failed", []))
-        summary["qb_absent"] = list(qb_out.get("absent", []) or [])
-        hashes_for_db = list(qb_out.get("hashes_to_delete_in_db", []) or [])
-
-        # 2) perform BDD delete via CommunService (if applicable)
-        if hashes_for_db:
-            try:
-                db_result = self.commun_service.perform_bdd_delete(hashes_for_db) or {"deleted_total": 0}
-                summary["db_deleted_count"] = int(db_result.get("deleted_total", 0))
-            except Exception:
-                self.logger.exception("_perform_deletions: perform_bdd_delete raised")
-                summary["db_deleted_count"] = 0
-
-            # 3) remove rows from deferred_deletions via repo.delete_many
-            try:
-                removed = self.deferred_repo.delete_many(hashes_for_db)
-                self.logger.info("_perform_deletions: deferred rows removed=%s for hashes=%s", removed, hashes_for_db)
-            except Exception:
-                self.logger.exception("_perform_deletions: deferred_repo.delete_many failed (will retry later)")
-
-        return summary
-
-    
