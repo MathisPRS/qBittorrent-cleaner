@@ -26,8 +26,40 @@ class CommunService:
         self.delta = timedelta(hours=48)
 
     # -----------------------------
-    # qBittorrent helpers
+    # Deletion helpers
     # -----------------------------
+
+    def perform_deletion(self, ready_hashes):
+        # Delete QBITTORRENT
+        try:
+            qb_out = self.perform_qbittorrent_delete(ready_hashes)
+        except Exception:
+            self.logger.exception("delete_ready_hashes_and_notify: perform_qbittorrent_delete failed")
+            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
+
+        deleted = qb_out.get("deleted", [])
+        failed = qb_out.get("failed", [])
+        absent = qb_out.get("absent", [])
+        hashes_for_db = qb_out.get("hashes_to_delete_in_db", [])
+
+        # Delete BDD
+        try:
+            db_result = self.perform_bdd_delete(hashes_for_db)
+        except Exception:
+            self.logger.exception("delete_ready_hashes_and_notify: perform_bdd_delete failed")
+            db_result = {"deleted_total": 0}
+
+        # prepare notification lists
+        deleted_names = [n for (_h, n) in deleted if n]
+        absent_names = list(absent) if absent else []
+        failed_names = [n for (_h, n) in failed if n]
+
+        return {"deleted_names": deleted_names,
+                "absent_names": absent_names,
+                "failed_names": failed_names,
+                "db_result": db_result}
+    
+
     def perform_qbittorrent_delete(self, hashes_to_delete: list) -> dict:
 
         qb_result = self.qb.delete_torrents(hashes_to_delete, delete_files=True)
@@ -62,9 +94,6 @@ class CommunService:
             "hashes_to_delete_in_db": hashes_to_delete_in_db,
         }
 
-    # -----------------------------
-    # BDD helpers
-    # -----------------------------
     def perform_bdd_delete(self, hashes_to_delete: list) -> dict:
        
         if not hashes_to_delete:

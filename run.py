@@ -1,4 +1,3 @@
-# run.py (option B — recommandé)
 from app import create_app
 from app.config import SERVER_HOST, SERVER_PORT
 from app.logger import init_logging

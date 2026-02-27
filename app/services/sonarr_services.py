@@ -200,7 +200,7 @@ class SonarrService:
         ep_identifier = f"S{season:02d}E{episode_num:02d}"
 
         try:
-            existing = self.episodes_repo.get_by_series_season_episode(series_obj.id, season, episode_num)
+            episode = self.episodes_repo.get_by_series_season_episode(series_obj.id, season, episode_num)
         except Exception:
             self.logger.exception(
                 "process_single_episode: DB error while getting episode %s for series_id=%s",
@@ -208,7 +208,7 @@ class SonarrService:
             )
             return {"action": "error"}
 
-        if existing is None:
+        if episode is None:
             # create episode
             try:
                 created = self.episodes_repo.create(
@@ -232,9 +232,9 @@ class SonarrService:
 
         # episode exists -> check current latest torrent hash
         current_hash = None
-        if existing.latest_torrent_id:
+        if episode.latest_torrent_id:
             try:
-                cur_t = self.torrents_repo.get_by_id(existing.latest_torrent_id)
+                cur_t = self.torrents_repo.get_by_id(episode.latest_torrent_id)
                 if cur_t:
                     current_hash = getattr(cur_t, "hash", None)
                     self._old_torrent_name = getattr(cur_t, "name", None)
@@ -247,12 +247,12 @@ class SonarrService:
             return {"action": "same"}
 
         # update latest_torrent_id to new torrent via repo (no direct db.session)
-        old_torrent_id = existing.latest_torrent_id
+        old_torrent_id = episode.latest_torrent_id
         try:
-            updated = self.episodes_repo.update_latest_torrent_id(existing.id, new_torrent.id)
+            updated = self.episodes_repo.update_latest_torrent_id(episode.id, new_torrent.id)
             if not updated:
                 self.logger.warning(
-                    "process_single_episode: update affected 0 rows when updating episode id=%s", getattr(existing, "id", None)
+                    "process_single_episode: update affected 0 rows when updating episode id=%s", getattr(episode, "id", None)
                 )
             else:
                 self.logger.info("process_single_episode: updated episode %s to new torrent id=%s", ep_identifier, new_torrent.id)
@@ -280,28 +280,15 @@ class SonarrService:
         return {"action": "updated", "hashes_to_delete": hashes_to_delete}
     
     
-    def delete_ready_hashes_and_notify(self, ready_hashes: List[str], series_obj, new_torrent, updated_episodes: List[str], created_episodes: List[str], failed_episodes: List[str]) -> Dict:
-      
-        try:
-            qb_out = self.commun_service.perform_qbittorrent_delete(ready_hashes) or {}
-        except Exception:
-            self.logger.exception("delete_ready_hashes_and_notify: perform_qbittorrent_delete failed")
-            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
+    def delete_ready_hashes_and_notify(self,ready_hashes: List[str],series_obj,new_torrent, updated_episodes: List[str], created_episodes: List[str],failed_episodes: List[str]) -> Dict:
+        
+        result = self.commun_service.perform_deletion(ready_hashes)
 
-        deleted = qb_out.get("deleted", [])
-        failed = qb_out.get("failed", [])
-        absent = qb_out.get("absent", [])
-        hashes_for_db = qb_out.get("hashes_to_delete_in_db", []) or []
-
-        try:
-            db_result = self.commun_service.perform_bdd_delete(hashes_for_db)
-        except Exception:
-            self.logger.exception("delete_ready_hashes_and_notify: perform_bdd_delete failed")
-            db_result = {"deleted_total": 0}
-
-        deleted_names = [n for (_h, n) in deleted if n]
-        absent_names = list(absent) if absent else []
-        failed_names = [n for (_h, n) in failed if n]
+        # Résultats de perform_deletion (contrat)
+        deleted_names = result["deleted_names"]
+        absent_names = result["absent_names"]
+        failed_names = result["failed_names"]
+        deleted_db_rows = result["deleted_db_rows"]
 
         try:
             self.commun_service._send_notify(
@@ -320,7 +307,7 @@ class SonarrService:
             "action": "replace_and_cleanup",
             "series_id": series_obj.id,
             "new_torrent_id": getattr(self._new_torrent, "id", None) or getattr(new_torrent, "id", None),
-            "deleted_db_rows": db_result.get("deleted_total", 0),
+            "deleted_db_rows": deleted_db_rows,
             "deleted_episodes": updated_episodes,
             "created_episodes": created_episodes,
             "failed_episodes": failed_episodes

@@ -1210,7 +1210,7 @@ payload = {
   ],
   "downloadClient": "qBittorrent (animes)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "97JEDFTF6123KC87394C45YA898B5AE052DB62E3",
+  "downloadId": "46f326729942abfc311adecdbee66649a4db90a0",
   "release": {
     "releaseType": "seasonPack"
   },

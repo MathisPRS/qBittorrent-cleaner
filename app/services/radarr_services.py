@@ -149,29 +149,21 @@ class RadarrService:
 
     def link_movie_without_previous_torrent(self, movie, new_torrent) -> Dict:
         try:
-            # prefer repo method (expects it to commit)
-            if hasattr(self.movies_repo, "update_latest_torrent_id"):
-                updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
-                if not updated:
-                    # best-effort warning; we continue
-                    self.logger.warning(
-                        "link_movie_without_previous_torrent: update affected 0 rows (movie_id=%s)",
-                        movie.id
-                    )
-            else:
-                # fallback to repo API that may accept radarr_id
-                try:
-                    self.movies_repo.update_latest_torrent_id_by_radarr_id(movie.radarr_id, new_torrent.id)
-                except Exception:
-                    self.logger.exception("link_movie_without_previous_torrent: fallback repo update failed for radarr_id=%s", movie.radarr_id)
+            updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
+            if not updated:
+                self.logger.warning(
+                    "link_movie_without_previous_torrent: update affected 0 rows (movie_id=%s)",
+                    movie.id
+                )
 
             self.logger.info(
                 "link_movie_without_previous_torrent: linked movie id=%s to new torrent id=%s (no previous torrent)",
                 movie.id, new_torrent.id
             )
+
         except Exception:
             self.logger.exception(
-                "link_movie_without_previous_torrent: DB update failed while linking new torrent (no previous torrent) movie_id=%s",
+                "link_movie_without_previous_torrent: DB update failed (movie_id=%s)",
                 movie.id
             )
             return {
@@ -179,6 +171,7 @@ class RadarrService:
                 "message": "db_commit_failed",
                 "movie_id": movie.id
             }
+
         try:
             self.commun_service._send_notify(
                 movie.title,
@@ -200,37 +193,16 @@ class RadarrService:
 
 
     def delete_ready_hashes_and_notify(self, ready_hashes: list, movie, old_torrent_id: Optional[int], new_torrent) -> Dict:
-        try:
-            qb_out = self.commun_service.perform_qbittorrent_delete(ready_hashes) or {}
-        except Exception:
-            self.logger.exception("delete_ready_hashes_and_notify: perform_qbittorrent_delete failed")
-            qb_out = {"deleted": [], "failed": [], "absent": [], "hashes_to_delete_in_db": []}
 
-        deleted = qb_out.get("deleted", [])
-        failed = qb_out.get("failed", [])
-        absent = qb_out.get("absent", [])
-        hashes_for_db = qb_out.get("hashes_to_delete_in_db", []) or []
-
-        # Delete old torrent(s) from DB for the hashes qBittorrent confirmed
-        try:
-            db_result = self.commun_service.perform_bdd_delete(hashes_for_db)
-        except Exception:
-            self.logger.exception("delete_ready_hashes_and_notify: perform_bdd_delete failed")
-            db_result = {"deleted_total": 0}
-
-        # prepare notification lists
-        deleted_names = [n for (_h, n) in deleted if n]
-        absent_names = list(absent) if absent else []
-        failed_names = [n for (_h, n) in failed if n]
-
+        result = self.commun_service.perform_deletion(ready_hashes)
         try:
             self.commun_service._send_notify(
                 movie.title,
                 self._old_torrent_name or "—",
                 self._new_torrent_name,
-                deleted_names,
-                absent_names,
-                failed_names,
+                result["deleted_names"],
+                result["absent_names"],
+                result["failed_names"],
                 self._movie_image_url
             )
         except Exception:
@@ -241,5 +213,5 @@ class RadarrService:
             "movie_id": movie.id,
             "old_torrent_id": old_torrent_id,
             "new_torrent_id": new_torrent.id,
-            "deleted_db_rows": db_result.get("deleted_total", 0)
+            "deleted_db_rows": result["deleted_total"]
         }
