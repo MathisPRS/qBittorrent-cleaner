@@ -2,8 +2,8 @@
 # deploy/start.sh
 set -euo pipefail
 
-APP_UID=153192260
-APP_GID=153192260
+APP_UID=1000
+APP_GID=1000
 
 # Ensure necessary directories exist (host bind mount may create them with wrong perms)
 mkdir -p /app/data /app/logs /app/run /app/data/redis

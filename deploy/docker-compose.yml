@@ -17,8 +17,8 @@ services:
       - ../data/redis:/data
     # ensure proper ownership on start and then run redis
     environment:
-      - APP_UID=153192260
-      - APP_GID=153192260
+      - APP_UID=1000
+      - APP_GID=1000
     command: sh -c "chown -R ${APP_UID}:${APP_GID} /data || true; exec redis-server --dir /data"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -31,8 +31,8 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
       args:
-        APP_UID: 153192260
-        APP_GID: 153192260
+        APP_UID: 1000
+        APP_GID: 1000
     image: webhook-cleaner:latest
     container_name: webhook-cleaner
     networks:
@@ -45,8 +45,8 @@ services:
       - ../logs:/app/logs
       - ../:/app:rw
     environment:
-      - APP_UID=153192260
-      - APP_GID=153192260
+      - APP_UID=1000
+      - APP_GID=1000
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -65,7 +65,7 @@ services:
   celery-worker:
     image: webhook-cleaner:latest
     container_name: webhook-cleaner-worker
-    user: "153192260:153192260"
+    user: "1000:1000"
     command: celery -A app.extensions.celery worker --loglevel=info --concurrency=1
     networks:
       - media_net
@@ -75,8 +75,8 @@ services:
       - ../logs:/app/logs
       - ../:/app:rw
     environment:
-      - APP_UID=153192260
-      - APP_GID=153192260
+      - APP_UID=1000
+      - APP_GID=1000
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -88,7 +88,7 @@ services:
   celery-beat:
     image: webhook-cleaner:latest
     container_name: webhook-cleaner-beat
-    user: "153192260:153192260"
+    user: "1000:1000"
     command: >
       celery -A app.extensions.celery beat
       --loglevel=info
@@ -101,8 +101,8 @@ services:
       - ../logs:/app/logs
       - ../:/app:rw
     environment:
-      - APP_UID=153192260
-      - APP_GID=153192260
+      - APP_UID=1000
+      - APP_GID=1000
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
