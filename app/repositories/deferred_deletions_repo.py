@@ -78,23 +78,7 @@ class DeferredDeletionsRepo:
         except Exception:
             logger.exception("list_batch failed (limit=%s offset=%s)", limit, offset)
             return []
-
-    def delete_by_hash(self, torrent_hash: str) -> int:
-        if not torrent_hash:
-            return 0
-        try:
-            res = db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).delete(synchronize_session=False)
-            db.session.commit()
-            logger.info("delete_by_hash: deleted %d rows for %s", res, torrent_hash)
-            return res
-        except Exception:
-            logger.exception("delete_by_hash failed for %s", torrent_hash)
-            try:
-                db.session.rollback()
-            except Exception:
-                logger.exception("delete_by_hash: rollback failed")
-            return 0
-
+        
     def delete_many(self, hashes: List[str]) -> int:
         if not hashes:
             logger.debug("delete_many: empty hashes -> nothing to delete")

@@ -119,34 +119,6 @@ class DeferredDeletionService:
 
         return result
 
-    def process_once(self, batch_size: int = 100, notify: bool = True) -> Dict:
-        summary = {"fetched": 0, "candidates": [], "deletable": [], "deletion": None}
-
-        try:
-            rows = self.deferred_deletion_repo.get_due(limit=batch_size)
-        except Exception:
-            self.logger.exception("process_once: get_due failed")
-            return summary
-
-        if not rows:
-            self.logger.debug("process_once: none due")
-            return summary
-
-        summary["fetched"] = len(rows)
-        summary["candidates"] = [(getattr(r, "torrent_hash", "") or "").strip().lower() for r in rows]
-        deletable = self._collect_deletable_hashes(rows)
-        summary["deletable"] = deletable
-
-        if not deletable:
-            self.logger.info("process_once: none deletable now (%d rows)", len(rows))
-            return summary
-
-        deletion_summary = self.perform_deletion_deferred(deletable, notify=notify)
-        summary["deletion"] = deletion_summary
-
-        self.logger.info("process_once: done summary=%s", summary)
-        return summary
-    
     # -----------------------------
     # Deferred_deletion helpers
     # -----------------------------
@@ -229,19 +201,16 @@ class DeferredDeletionService:
     
     def schedule_deferred_for_hash(self, torrent_hash: str, can_be_deleted_at: datetime) -> Optional[str]:
         try:
-            # schedule the task via Celery apply_async (returns AsyncResult)
-            async_result = process_deferred_deletion.apply_async(args=(torrent_hash,), eta=can_be_deleted_at)
-            task_id = getattr(async_result, "id", None)
+            async_res = process_deferred_deletion.apply_async(args=(torrent_hash,), eta=can_be_deleted_at)
+            task_id = getattr(async_res, "id", None)
             if task_id:
                 try:
-                    # try to persist task_id in repo (repo has set_task_id_for_hash)
                     self.deferred_deletion_repo.set_task_id_for_hash(torrent_hash, task_id)
                 except Exception:
-                    # not fatal: log and continue
                     self.logger.exception("schedule_deferred_for_hash: failed to persist task_id for %s", torrent_hash)
             return task_id
         except Exception:
-            self.logger.exception("schedule_deferred_for_hash: failed to schedule for %s", torrent_hash)
+            self.logger.exception("schedule_deferred_for_hash: scheduling failed for %s", torrent_hash)
             return None
         
         
