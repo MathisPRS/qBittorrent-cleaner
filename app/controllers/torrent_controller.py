@@ -1,6 +1,7 @@
 from flask import jsonify
 from app.logger import get_logger
 from ..services.torrent_service import TorrentService
+from ..repositories.torrents_repo import TorrentsRepo
 
 logger = get_logger(__name__)
 
@@ -55,3 +56,36 @@ def torrent_webhook(request, app):
                        "---------------------------------------------------")
 
     return jsonify({"ok": True, "result": result}), 200
+
+
+
+def get_torrent_by_hash(request, app):
+    logger = get_logger(__name__, app=app)
+
+    torrent_hash = request.args.get("hash")
+    repo = TorrentsRepo()
+    torrent = repo.get_by_hash(torrent_hash)
+
+    if not torrent_hash:
+        logger.debug("get_torrent_by_hash: missing hash parameter")
+        return jsonify({
+            "ok": False,
+            "error": "missing_hash"
+        }), 400
+
+    
+    if not torrent:
+        logger.info("get_torrent_by_hash: torrent not found hash=%s", torrent_hash)
+        return jsonify({
+            "ok": False,
+            "error": "not_found"
+        }), 404
+
+    logger.info("get_torrent_by_hash: found torrent id=%s hash=%s", torrent.id, torrent.hash)
+
+    return jsonify({
+        "ok": True,
+        "torrent_id": torrent.id,
+        "hash": torrent.hash,
+        "name": torrent.name
+    }), 200
