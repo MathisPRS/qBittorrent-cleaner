@@ -1,6 +1,7 @@
 # app/services/radarr_service.py
 from typing import Dict, Optional
 from ..services.commun_service import CommunService
+from app.services.deferred_deletion_services import DeferredDeletionService
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
@@ -17,6 +18,7 @@ class RadarrService:
         self.torrents_repo = TorrentsRepo()
         self.movies_repo = MoviesRepo()
         self.commun_service = CommunService(app)
+        self.deferred_deletion_services = DeferredDeletionService(app)
         self.qb = QbittorrentAdapter()
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None
@@ -113,7 +115,7 @@ class RadarrService:
 
         # --- 6) partition ready vs deferred: filter_deferred_deletion_hash enqueues deferred ones
         try:
-            ready_to_be_deleted = self.commun_service.filter_deferred_deletion_hash(candidate_hashes)
+            ready_to_be_deleted = self.deferred_deletion_services.filter_deferred_deletion_hash(candidate_hashes)
         except Exception:
             self.logger.exception("update_existing_movie: filter_deferred_deletion_hash failed")
             # conservative fallback: attempt to delete all candidate hashes

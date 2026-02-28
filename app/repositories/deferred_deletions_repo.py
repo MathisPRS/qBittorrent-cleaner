@@ -1,4 +1,4 @@
-# repositories/deferred_deletions_repo.py
+# app/repositories/deferred_deletions_repo.py
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,10 +9,9 @@ from app.logger import get_logger
 
 logger = get_logger(__name__)
 
-
 class DeferredDeletionsRepo:
 
-    def create_if_not_exists(self, torrent_hash: str, name: Optional[str], can_be_deleted_at: datetime) -> bool:
+    def create_if_not_exists(self, torrent_hash: str, name: Optional[str], can_be_deleted_at: datetime, celery_task_id: Optional[str] = None) -> bool:
         if not torrent_hash:
             logger.debug("create_if_not_exists: empty torrent_hash -> skip")
             return False
@@ -26,7 +25,8 @@ class DeferredDeletionsRepo:
             row = DeferredDeletion(
                 name=name,
                 torrent_hash=torrent_hash,
-                can_be_deleted_at=can_be_deleted_at
+                can_be_deleted_at=can_be_deleted_at,
+                celery_task_id=celery_task_id
             )
             db.session.add(row)
             db.session.commit()
@@ -41,7 +41,59 @@ class DeferredDeletionsRepo:
             except Exception:
                 logger.exception("create_if_not_exists: rollback failed for hash=%s", torrent_hash)
             return False
-        
+
+    def get_by_hash(self, torrent_hash: str) -> Optional[DeferredDeletion]:
+        if not torrent_hash:
+            return None
+        try:
+            return db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).first()
+        except Exception:
+            logger.exception("get_by_hash failed for %s", torrent_hash)
+            return None
+
+    def set_task_id_for_hash(self, torrent_hash: str, task_id: str) -> bool:
+        if not torrent_hash:
+            return False
+        try:
+            row = db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).one_or_none()
+            if not row:
+                return False
+            row.celery_task_id = task_id
+            db.session.add(row)
+            db.session.commit()
+            logger.info("set_task_id_for_hash: stored task_id for %s", torrent_hash)
+            return True
+        except Exception:
+            logger.exception("set_task_id_for_hash failed for %s", torrent_hash)
+            try:
+                db.session.rollback()
+            except Exception:
+                logger.exception("set_task_id_for_hash: rollback failed")
+            return False
+
+    def list_batch(self, limit: int = 500, offset: int = 0) -> List[DeferredDeletion]:
+        try:
+            q = db.session.query(DeferredDeletion).order_by(DeferredDeletion.id).limit(limit).offset(offset)
+            return q.all()
+        except Exception:
+            logger.exception("list_batch failed (limit=%s offset=%s)", limit, offset)
+            return []
+
+    def delete_by_hash(self, torrent_hash: str) -> int:
+        if not torrent_hash:
+            return 0
+        try:
+            res = db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).delete(synchronize_session=False)
+            db.session.commit()
+            logger.info("delete_by_hash: deleted %d rows for %s", res, torrent_hash)
+            return res
+        except Exception:
+            logger.exception("delete_by_hash failed for %s", torrent_hash)
+            try:
+                db.session.rollback()
+            except Exception:
+                logger.exception("delete_by_hash: rollback failed")
+            return 0
 
     def delete_many(self, hashes: List[str]) -> int:
         if not hashes:

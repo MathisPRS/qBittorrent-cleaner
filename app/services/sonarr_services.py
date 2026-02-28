@@ -5,6 +5,7 @@ from ..repositories.series_repo import SeriesRepo
 from ..repositories.episodes_repo import EpisodesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
 from ..services.commun_service import CommunService
+from app.services.deferred_deletion_services import DeferredDeletionService
 from app.logger import get_logger
 
 
@@ -17,6 +18,7 @@ class SonarrService:
         self.episodes_repo = EpisodesRepo()
         self.qb_adapter = QbittorrentAdapter()
         self.commun_service = CommunService(app)
+        self.deferred_deletion_services = DeferredDeletionService(app)
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None
         self._series_image_url: Optional[str] = None
@@ -159,7 +161,7 @@ class SonarrService:
 
         # Partition ready vs deferred and enqueue deferred ones inside filter_deferred_deletion_hash
         try:
-            ready_to_be_deleted = self.commun_service.filter_deferred_deletion_hash(hashes_to_delete)
+            ready_to_be_deleted = self.deferred_deletion_services.filter_deferred_deletion_hash(hashes_to_delete)
         except Exception:
             self.logger.exception("update_existing_series_episodes: filter_deferred_deletion_hash failed")
             # fallback conservative: attempt to delete everything
