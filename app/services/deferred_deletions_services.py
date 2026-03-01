@@ -16,11 +16,12 @@ class DeferredDeletionService:
     def __init__(self, app=None):
         self.app = app or current_app._get_current_object()
         self.logger = get_logger(__name__, app=self.app)
+        self.commun_services = CommunService(self.app)
+        self.scheduler_services = SchedulerService(self.app)
+
         self.deferred_deletion_repo = DeferredDeletionsRepo()
-        self.commun_services = CommunService()
         self.torrents_repo = TorrentsRepo()
         self.delta = timedelta(hours=48)
-        self.scheduler_services = SchedulerService(self.app)
 
     def _now_utc(self) -> datetime:
         return datetime.utcnow()

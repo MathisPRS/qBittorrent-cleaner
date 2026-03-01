@@ -87,7 +87,7 @@ class RadarrService:
         # --- 4) There is an old torrent -> switch pointer to new torrent (DB update via repo)
         old_torrent_id = movie.latest_torrent_id
         try:
-            updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
+            updated = self.movies_repo.update_latest_torrent_id(radarr_id=movie.radarr_id, latest_torrent_id=new_torrent.id)
             if not updated:
                 self.logger.warning("update_existing_movie: update affected 0 rows (movie_id=%s)", movie.id)
         except Exception:
@@ -150,7 +150,7 @@ class RadarrService:
 
     def link_movie_without_previous_torrent(self, movie, new_torrent) -> Dict:
         try:
-            updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
+            updated = self.movies_repo.update_latest_torrent_id(movie.radarr_id, new_torrent.id)
             if not updated:
                 self.logger.warning(
                     "link_movie_without_previous_torrent: update affected 0 rows (movie_id=%s)",

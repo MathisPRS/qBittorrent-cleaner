@@ -17,7 +17,7 @@ class SonarrService:
         self.series_repo = SeriesRepo()
         self.episodes_repo = EpisodesRepo()
         self.qb_adapter = QbittorrentAdapter()
-        self.commun_service = CommunService()
+        self.commun_service = CommunService(app)
         self.deferred_deletion_services = DeferredDeletionService(app)
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None
