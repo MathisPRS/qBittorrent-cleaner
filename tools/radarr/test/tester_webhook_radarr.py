@@ -8,7 +8,7 @@ URL = "http://127.0.0.1:8124/api/radarr"  # adapte si besoin
 payload = {
   "movie": {
     "id": 789,
-    "title": "Ratatouille 2: The Cheese Strikes Back",
+    "title": "Test Musique1",
     "year": 2012,
     "releaseDate": "2013-02-06",
     "folderPath": "/nas-omv/Films/Ratatouille 2: The Cheese Strikes Back (2012)",
@@ -52,12 +52,12 @@ payload = {
       "videoDynamicRange": "",
       "videoDynamicRangeType": ""
     },
-    "sourcePath": "/nas-omv/Downloads/Complet/films/Ratatouille 2: The Cheese Strikes Back.mkv"
+    "sourcePath": "/nas-omv/Downloads/Complet/films/Test Musique1.mkv"
   },
   "isUpgrade": False,
   "downloadClient": "qBittorrent (films)",
   "downloadClientType": "qBittorrent",
-  "downloadId": "95a2k91c738995491759aa336d8029fa2e902f7d",
+  "downloadId": "20bb5389a9e4e80e9aadbaa2e131c315bd87352d",
   "customFormatInfo": {
     "customFormats": [
       {"id": 13, "name": "1080p"},

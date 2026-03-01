@@ -1,11 +1,11 @@
 # app/services/radarr_service.py
 from typing import Dict, Optional
-from ..services.commun_service import CommunService
+from .commun_services import CommunService
+from app.services.deferred_deletions_services import DeferredDeletionService
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
 from ..extensions import db
-from ..config import QBIT_HOST, QBIT_PASS, QBIT_USER
 from app.logger import get_logger
 
 
@@ -17,6 +17,7 @@ class RadarrService:
         self.torrents_repo = TorrentsRepo()
         self.movies_repo = MoviesRepo()
         self.commun_service = CommunService(app)
+        self.deferred_deletion_services = DeferredDeletionService(app)
         self.qb = QbittorrentAdapter()
         self._old_torrent_name: Optional[str] = None
         self._new_torrent_name: Optional[str] = None
@@ -86,7 +87,7 @@ class RadarrService:
         # --- 4) There is an old torrent -> switch pointer to new torrent (DB update via repo)
         old_torrent_id = movie.latest_torrent_id
         try:
-            updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
+            updated = self.movies_repo.update_latest_torrent_id(radarr_id=movie.radarr_id, latest_torrent_id=new_torrent.id)
             if not updated:
                 self.logger.warning("update_existing_movie: update affected 0 rows (movie_id=%s)", movie.id)
         except Exception:
@@ -113,7 +114,7 @@ class RadarrService:
 
         # --- 6) partition ready vs deferred: filter_deferred_deletion_hash enqueues deferred ones
         try:
-            ready_to_be_deleted = self.commun_service.filter_deferred_deletion_hash(candidate_hashes)
+            ready_to_be_deleted = self.deferred_deletion_services.filter_deferred_deletion_hash(candidate_hashes)
         except Exception:
             self.logger.exception("update_existing_movie: filter_deferred_deletion_hash failed")
             # conservative fallback: attempt to delete all candidate hashes
@@ -149,7 +150,7 @@ class RadarrService:
 
     def link_movie_without_previous_torrent(self, movie, new_torrent) -> Dict:
         try:
-            updated = self.movies_repo.update_latest_torrent_id(movie.id, new_torrent.id)
+            updated = self.movies_repo.update_latest_torrent_id(movie.radarr_id, new_torrent.id)
             if not updated:
                 self.logger.warning(
                     "link_movie_without_previous_torrent: update affected 0 rows (movie_id=%s)",

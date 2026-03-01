@@ -1,4 +1,3 @@
-# app/repositories/episodes_repo.py
 from ..extensions import db
 from ..models.episodes import Episodes
 from app.logger import get_logger
