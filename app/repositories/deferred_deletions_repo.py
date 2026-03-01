@@ -1,4 +1,3 @@
-# app/repositories/deferred_deletions_repo.py
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
@@ -41,6 +40,7 @@ class DeferredDeletionsRepo:
             except Exception:
                 logger.exception("create_if_not_exists: rollback failed for hash=%s", torrent_hash)
             return False
+        
 
     def get_by_hash(self, torrent_hash: str) -> Optional[DeferredDeletion]:
         if not torrent_hash:
@@ -50,6 +50,7 @@ class DeferredDeletionsRepo:
         except Exception:
             logger.exception("get_by_hash failed for %s", torrent_hash)
             return None
+        
 
     def set_task_id_for_hash(self, torrent_hash: str, task_id: str) -> bool:
         if not torrent_hash:
@@ -70,6 +71,7 @@ class DeferredDeletionsRepo:
             except Exception:
                 logger.exception("set_task_id_for_hash: rollback failed")
             return False
+        
 
     def list_batch(self, limit: int = 500, offset: int = 0) -> List[DeferredDeletion]:
         try:
@@ -78,6 +80,7 @@ class DeferredDeletionsRepo:
         except Exception:
             logger.exception("list_batch failed (limit=%s offset=%s)", limit, offset)
             return []
+        
         
     def delete_many(self, hashes: List[str]) -> int:
         if not hashes:

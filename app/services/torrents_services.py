@@ -1,6 +1,6 @@
 # app/services/torrent_service.py
 from typing import Dict, Optional
-from ..services.commun_service import CommunService
+from .commun_services import CommunService
 from ..repositories.torrents_repo import TorrentsRepo
 from ..adapters.gotify_adapter import notify_gotify
 from app.logger import get_logger

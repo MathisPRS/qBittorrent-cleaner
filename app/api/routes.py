@@ -1,7 +1,7 @@
 from flask import Blueprint, request, current_app
 from ..controllers.radarr_controller import radarr_webhook
 from ..controllers.sonarr_controller import sonarr_webhook
-from ..controllers.torrent_controller import torrent_webhook, get_torrent_by_hash
+from ..controllers.torrents_controller import torrent_webhook, get_torrent_by_hash
 
 bp = Blueprint("api", __name__)
 

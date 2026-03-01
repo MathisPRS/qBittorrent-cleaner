@@ -1,15 +1,14 @@
 # app/tasks/deferred_tasks.py
 import time
-from datetime import datetime
 from flask import current_app
 from app.extensions import celery, get_redis
 from app.repositories.deferred_deletions_repo import DeferredDeletionsRepo
-from app.services.deferred_deletion_service import DeferredDeletionService
+
+# tasks import the service class (one direction)
+from app.services.deferred_deletions_services import DeferredDeletionService
 
 r = get_redis()
 deferred_repo = DeferredDeletionsRepo()
-service = DeferredDeletionService()  # adapte si ton constructeur a args
-
 LOCK_PREFIX = "deferred:lock:"
 
 def acquire_lock(lock_key: str, ttl: int = 60) -> bool:
@@ -33,12 +32,16 @@ def process_deferred_deletion(self, torrent_hash: str):
         return
 
     try:
+        # instantiate the service in the worker context
+        svc = DeferredDeletionService(app=current_app._get_current_object())
+
+        # verify row exists
         row = deferred_repo.get_by_hash(torrent_hash)
         if not row:
             current_app.logger.info("process_deferred_deletion: no deferred row for %s -> skip", torrent_hash)
             return
 
-        # Defensive check: ensure due
+        # ensure due
         now_ts = int(time.time())
         try:
             due_ts = int(row.can_be_deleted_at.timestamp()) if row.can_be_deleted_at else now_ts
@@ -46,22 +49,21 @@ def process_deferred_deletion(self, torrent_hash: str):
             due_ts = now_ts
 
         if due_ts > now_ts:
-            # Not due yet: reschedule correctly
+            # reschedule if executed too early (defensive)
             process_deferred_deletion.apply_async(args=(torrent_hash,), eta=row.can_be_deleted_at)
-            current_app.logger.info("process_deferred_deletion: %s not due yet -> rescheduled", torrent_hash)
+            current_app.logger.info("process_deferred_deletion: %s not due -> rescheduled", torrent_hash)
             return
 
-        # Use your existing service method (it accepts List[str])
+        # call business logic (list)
         try:
-            res = service.perform_deletion_deferred([torrent_hash], notify=True)
-            current_app.logger.info("process_deferred_deletion: result for %s -> %s", torrent_hash, res)
+            result = svc.perform_deletion_deferred([torrent_hash], notify=True)
+            current_app.logger.info("process_deferred_deletion: finished for %s result=%s", torrent_hash, result)
         except Exception:
             current_app.logger.exception("process_deferred_deletion: perform_deletion_deferred failed for %s", torrent_hash)
             raise self.retry(countdown=60)
 
     finally:
         release_lock(lock_key)
-
 
 @celery.task(name="deferred.reconcile_db_to_celery")
 def reconcile_db_to_celery(batch_size: int = 500):

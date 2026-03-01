@@ -1,17 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 import os
-from typing import List, Optional
+from typing import  Optional
 
-from sqlalchemy import Tuple
+
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..repositories.deferred_deletions_repo import DeferredDeletionsRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
-from ..services.deferred_deletion_services  import DeferredDeletionService
 from ..adapters.gotify_adapter import notify_gotify
 from ..extensions import db
 
-from ..config import QBIT_HOST, QBIT_PASS, QBIT_USER
 from app.logger import get_logger
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -23,7 +21,6 @@ class CommunService:
         self.torrents_repo = TorrentsRepo()
         self.movie_repo = MoviesRepo()
         self.deferred_deletion_repo = DeferredDeletionsRepo()
-        self.deferred_deletion_services = DeferredDeletionService
         self.qb = QbittorrentAdapter()
         self.delta = timedelta(hours=48)
 
@@ -153,6 +150,7 @@ class CommunService:
             "skipped_hashes": skipped_hashes,
         }
     
+
     
     # -----------------------------
     # Gotify helpers

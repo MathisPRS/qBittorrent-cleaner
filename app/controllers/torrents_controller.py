@@ -1,6 +1,6 @@
 from flask import jsonify
 from app.logger import get_logger
-from ..services.torrent_service import TorrentService
+from ..services.torrents_services import TorrentService
 from ..repositories.torrents_repo import TorrentsRepo
 
 logger = get_logger(__name__)

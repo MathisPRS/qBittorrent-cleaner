@@ -2,15 +2,12 @@
 from typing import List, Dict
 from datetime import datetime, timedelta
 from flask import current_app
-from datetime import datetime
 from typing import Optional
-from app.extensions import get_redis
-from app.tasks.deferred_tasks import process_deferred_deletion
 from app.repositories.deferred_deletions_repo import DeferredDeletionsRepo
 from app.repositories.torrents_repo import TorrentsRepo
 from app.logger import get_logger
-from ..services.commun_service import CommunService
-
+from app.services.commun_services import CommunService
+from app.services.scheduler_services import SchedulerService
 
 logger = get_logger(__name__)
 
@@ -20,9 +17,10 @@ class DeferredDeletionService:
         self.app = app or current_app._get_current_object()
         self.logger = get_logger(__name__, app=self.app)
         self.deferred_deletion_repo = DeferredDeletionsRepo()
-        self.commun_service = CommunService(self.app)
+        self.commun_services = CommunService()
         self.torrents_repo = TorrentsRepo()
         self.delta = timedelta(hours=48)
+        self.scheduler_services = SchedulerService(self.app)
 
     def _now_utc(self) -> datetime:
         return datetime.utcnow()
@@ -59,7 +57,7 @@ class DeferredDeletionService:
             failed_names = [name for (_h, name) in failed_raw] if failed_raw and isinstance(failed_raw[0], (list, tuple)) else []
             absent_names = list(absent_raw or [])
             # generic notify: title + placeholders
-            self.commun_service._send_notify("Deferred deletions", "—", "—", deleted_names, [], failed_names, None)
+            self.commun_services._send_notify("Deferred deletions", "—", "—", deleted_names, [], failed_names, None)
             return True
         except Exception:
             self.logger.exception("_notify_deferred_deletion: notify failed")
@@ -83,7 +81,7 @@ class DeferredDeletionService:
         # qBittorrent Deletion
         qb_out = None
         try:
-            qb_out = self.commun_service.perform_qbittorrent_delete(hashes)
+            qb_out = self.commun_services.perform_qbittorrent_delete(hashes)
         except Exception:
             self.logger.exception("perform_deletion_deferred: qb delete failed")
             return result
@@ -198,62 +196,55 @@ class DeferredDeletionService:
             torrent_hash, ca.isoformat(), age, ready
         )
         return ready
-    
-    def schedule_deferred_for_hash(self, torrent_hash: str, can_be_deleted_at: datetime) -> Optional[str]:
-        try:
-            async_res = process_deferred_deletion.apply_async(args=(torrent_hash,), eta=can_be_deleted_at)
-            task_id = getattr(async_res, "id", None)
-            if task_id:
-                try:
-                    self.deferred_deletion_repo.set_task_id_for_hash(torrent_hash, task_id)
-                except Exception:
-                    self.logger.exception("schedule_deferred_for_hash: failed to persist task_id for %s", torrent_hash)
-            return task_id
-        except Exception:
-            self.logger.exception("schedule_deferred_for_hash: scheduling failed for %s", torrent_hash)
-            return None
-        
-        
+
+
+    ##############################
+    # Deferred
+    ##############################
     def migrate_deferred_torrent(self, torrent_hash: str, name: Optional[str] = None) -> None:
-        if not torrent_hash:
-            self.logger.debug("migrate_deferred_torrent: empty hash -> skip")
-            return
+            if not torrent_hash:
+                self.logger.debug("migrate_deferred_torrent: empty hash -> skip")
+                return
 
-        now = datetime.utcnow()
-        try:
-            created_at = self.torrents_repo.get_attr_created_at_by_hash(torrent_hash)
-        except Exception:
-            self.logger.exception("migrate_deferred_torrent: failed to read created_at for hash=%s", torrent_hash)
-            created_at = None
+            now = datetime.utcnow()
+            try:
+                created_at = self.torrents_repo.get_attr_created_at_by_hash(torrent_hash)
+            except Exception:
+                self.logger.exception("migrate_deferred_torrent: failed to read created_at for hash=%s", torrent_hash)
+                created_at = None
 
-        if created_at:
-            ca = created_at
-            if getattr(ca, "tzinfo", None):
-                try:
-                    ca = ca.astimezone(tz=None).replace(tzinfo=None)
-                except Exception:
-                    pass
-            can_be_deleted_at = ca + self.delta
-        else:
-            can_be_deleted_at = now + self.delta
-
-        try:
-            # create deferred row, note we don't pass task_id yet (we will store it after scheduling)
-            created = self.deferred_deletion_repo.create_if_not_exists(
-                torrent_hash=torrent_hash,
-                name=name,
-                can_be_deleted_at=can_be_deleted_at
-            )
-            if created:
-                self.logger.info("migrate_deferred_torrent: deferred row created for hash=%s can_be=%s", torrent_hash, can_be_deleted_at)
-                # Now schedule the deletion via Celery and store the task id (best-effort)
-                try:
-                    task_id = self.schedule_deferred_for_hash(torrent_hash, can_be_deleted_at)
-                    if task_id:
-                        self.logger.info("migrate_deferred_torrent: scheduled celery task %s for %s", task_id, torrent_hash)
-                except Exception:
-                    self.logger.exception("migrate_deferred_torrent: schedule_deferred_for_hash failed for %s", torrent_hash)
+            if created_at:
+                ca = created_at
+                if getattr(ca, "tzinfo", None):
+                    try:
+                        ca = ca.astimezone(tz=None).replace(tzinfo=None)
+                    except Exception:
+                        pass
+                can_be_deleted_at = ca + self.delta
             else:
-                self.logger.debug("migrate_deferred_torrent: deferred row already exists for hash=%s", torrent_hash)
-        except Exception:
-            self.logger.exception("migrate_deferred_torrent: failed to create deferred row for hash=%s", torrent_hash)
+                can_be_deleted_at = now + self.delta
+
+            try:
+                created = self.deferred_deletion_repo.create_if_not_exists(
+                    torrent_hash=torrent_hash,
+                    name=name,
+                    can_be_deleted_at=can_be_deleted_at
+                )
+                if created:
+                    self.logger.info("migrate_deferred_torrent: deferred row created for hash=%s can_be=%s",
+                                    torrent_hash, can_be_deleted_at)
+                    try:
+                        task_id =self.scheduler_services.schedule_deferred_for_hash(torrent_hash, can_be_deleted_at)
+                        if task_id:
+                            try:
+                                self.deferred_deletion_repo.set_task_id_for_hash(torrent_hash, task_id)
+                            except Exception:
+                                self.logger.exception("migrate_deferred_torrent: failed to persist task_id for %s", torrent_hash)
+                            self.logger.info("migrate_deferred_torrent: scheduled celery task %s for %s", task_id, torrent_hash)
+                    except Exception:
+                        self.logger.exception("migrate_deferred_torrent: schedule_deferred_for_hash failed for %s", torrent_hash)
+                else:
+                    self.logger.debug("migrate_deferred_torrent: deferred row already exists for hash=%s", torrent_hash)
+            except Exception:
+                self.logger.exception("migrate_deferred_torrent: failed to create deferred row for hash=%s", torrent_hash)
+

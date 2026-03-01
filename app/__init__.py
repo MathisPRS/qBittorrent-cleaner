@@ -24,7 +24,6 @@ def create_app(config_filename: str | None = None):
 
     _ensure_sqlite_dir(app)
 
-    # Celery wiring (IMPORTANT)
     init_extensions(app)
 
     app.register_blueprint(api_bp, url_prefix="/api")

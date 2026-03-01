@@ -1,12 +1,11 @@
 # app/services/radarr_service.py
 from typing import Dict, Optional
-from ..services.commun_service import CommunService
-from app.services.deferred_deletion_services import DeferredDeletionService
+from .commun_services import CommunService
+from app.services.deferred_deletions_services import DeferredDeletionService
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
 from ..extensions import db
-from ..config import QBIT_HOST, QBIT_PASS, QBIT_USER
 from app.logger import get_logger
 
 
