@@ -34,10 +34,6 @@ def radarr_webhook(request, app):
         )
         return jsonify({"ok": False, "message": "no downloadId — ignored"}), 200
     
-    if not indexer:
-        logger.info("radarr_webhook: no indexer value present")
-        indexer = None
-
     if not title or radarr_id is None:
         logger.error(
             "radarr_webhook: missing movie.title or movie.id (title=%s id=%s)",
@@ -70,7 +66,6 @@ def radarr_webhook(request, app):
             "size": movie_file.get("size"),
             "quality": release.get("quality"),
             "sourcePath": source_path,
-            "indexer": indexer
         },
     }
 
