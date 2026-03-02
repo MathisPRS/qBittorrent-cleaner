@@ -9,7 +9,7 @@ class Movie(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    radarr_id = db.Column(db.String(64), nullable=True)  # nullable True pour rester cohérent
+    radarr_id = db.Column(db.String(64), nullable=True)
     title = db.Column(db.String(512), nullable=True)
     latest_torrent_id = db.Column(
         db.Integer,

@@ -1,4 +1,3 @@
-# app/controllers/radarr_controller.py
 from flask import jsonify
 from app.logger import get_logger
 from ..services.radarr_services import RadarrService

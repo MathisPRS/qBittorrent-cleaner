@@ -18,12 +18,14 @@ class TorrentsRepo:
     def __init__(self):
         self.logger = logger
 
+
     def get_by_id(self, id_: int) -> Optional[Torrents]:
         try:
             return db.session.query(Torrents).get(id_)
         except Exception:
             self.logger.exception("[BBDD] get_by_id failed for %s", id_)
             return None
+        
 
     def get_by_hash(self, hashval: str) -> Optional[Torrents]:
         if not hashval:
@@ -34,12 +36,12 @@ class TorrentsRepo:
         except Exception:
             self.logger.exception("[BBDD] get_by_hash failed for %s", hv)
             return None
+        
 
     def create(self, hashval: str, name: Optional[str], indexer) -> Optional[Torrents]:
         if not hashval:
             raise ValueError("hashval is required")
         hv = _normalize_hash(hashval)
-        # return existing if present
         existing = self.get_by_hash(hv)
         if existing:
             return existing
@@ -61,6 +63,7 @@ class TorrentsRepo:
             except Exception:
                 self.logger.exception("[BBDD] rollback failed after create error")
             return self.get_by_hash(hv)
+        
 
     def delete_by_hash(self, hashval: str) -> int:
         if not hashval:
@@ -78,8 +81,9 @@ class TorrentsRepo:
             except Exception:
                 self.logger.exception("[BBDD] rollback failed after delete error")
             return 0
+        
 
-    def find_hashes_to_delete(self, parent_torrent_id: int) -> List[str]:
+    def get_hashes_to_delete(self, parent_torrent_id: int) -> List[str]:
         parent_torrent = self.get_by_id(parent_torrent_id)
         hashes_to_delete = []
         hashes_to_delete.append(parent_torrent.hash.strip().lower())
@@ -101,12 +105,11 @@ class TorrentsRepo:
         logger.info("[BBDD] Found %s cross-seed(s) for torrent_id=%s",len(hashes_to_delete), parent_torrent_id)
         return hashes_to_delete
     
+    
     def get_parent_by_name(self, name: str, exclude_id: Optional[int] = None, parent_hash: Optional[str] = None) -> Optional[Torrents]:
         if not name and not parent_hash:
             return None
-
         try:
-            # Si hash on l'utilise
             if parent_hash:
                 hv = _normalize_hash(parent_hash)
                 if not hv:
@@ -134,6 +137,7 @@ class TorrentsRepo:
         except Exception:
             self.logger.exception("[BBDD] get_parent_by_name failed for %s (exclude=%s, parent_hash=%s)", name, exclude_id, parent_hash)
             return None
+        
         
     def set_cross_seed_parent(self, child_hash: str, parent_id: int, child_name: Optional[str] = None) -> Optional[Torrents]:
 
@@ -182,6 +186,7 @@ class TorrentsRepo:
                 self.logger.exception("[BBDD] rollback failed after set_cross_seed_parent error")
             return None
         
+        
     def get_attr_created_at_by_hash(self, torrent_hash: str) -> Optional[datetime]:
         if not torrent_hash:
             return None
@@ -189,5 +194,4 @@ class TorrentsRepo:
             row = db.session.query(Torrents.created_at).filter(Torrents.hash == torrent_hash).one_or_none()
             return getattr(row, "created_at", None) if row is not None else None
         except Exception:
-            # log upstream; repo stays minimal
             raise

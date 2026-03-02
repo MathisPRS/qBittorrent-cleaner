@@ -2,7 +2,7 @@ alembic
 Flask
 Flask-SQLAlchemy
 Flask-Migrate
-python-dotenv      # pratique pour charger .env en dev
+python-dotenv
 psycopg2-binary
 requests
 qbittorrent-api

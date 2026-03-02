@@ -57,5 +57,5 @@ def make_celery(app):
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
 
-    celery.conf.imports = ("app.tasks.deferred_tasks")
+    celery.conf.imports = ["app.tasks.deferred_tasks"]    
     return celery

@@ -96,7 +96,7 @@ class RadarrService:
 
         # --- 5) collect candidate hashes to delete (old + cross-seeds)
         try:
-            candidate_hashes = self.torrents_repo.find_hashes_to_delete(old_torrent_id)
+            candidate_hashes = self.torrents_repo.get_hashes_to_delete(old_torrent_id)
         except Exception:
             self.logger.exception(
                 "update_existing_movie: failed to collect hashes_to_delete for old_torrent_id=%s", old_torrent_id

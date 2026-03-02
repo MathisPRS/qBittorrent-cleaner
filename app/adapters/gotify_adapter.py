@@ -22,6 +22,7 @@ class GotifyAdapter:
         self._max_image_bytes = int(getattr(app_config, "GOTIFY_MAX_IMAGE_BYTES", 8 * 1024 * 1024))
         self._user_agent = getattr(app_config, "GOTIFY_USER_AGENT", "gotify-client/1.0")
 
+
     def _infer_filename(self, url: str, content_type: Optional[str]) -> str:
         try:
             path = unquote(urlsplit(url).path or "")
@@ -35,6 +36,7 @@ class GotifyAdapter:
             if ext:
                 return f"image{ext}"
         return "image.jpg"
+    
 
     def _post_json(self, title: str, message: str) -> dict:
         post_url = f"{self.base_url}/message"
@@ -47,6 +49,7 @@ class GotifyAdapter:
         except RequestException as exc:
             logger.warning("[Gotify] JSON send failed: %s", exc)
             return {"ok": False, "error": str(exc)}
+        
 
     def send(self, title: str, lines: Optional[List[str]] = None, image_url: Optional[str] = None) -> dict:
         if not (self.enabled and self.base_url and self.token):

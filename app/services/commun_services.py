@@ -27,9 +27,8 @@ class CommunService:
     # -----------------------------
     # Deletion helpers
     # -----------------------------
-
     def perform_deletion(self, ready_hashes):
-        # Delete QBITTORRENT
+        # 1 Delete QBITTORRENT
         try:
             qb_out = self.perform_qbittorrent_delete(ready_hashes)
         except Exception:
@@ -41,7 +40,7 @@ class CommunService:
         absent = qb_out.get("absent", [])
         hashes_for_db = qb_out.get("hashes_to_delete_in_db", [])
 
-        # Delete BDD
+        # 2 Delete BDD
         try:
             db_result = self.perform_bdd_delete(hashes_for_db)
         except Exception:
@@ -92,9 +91,9 @@ class CommunService:
             "absent": absent,
             "hashes_to_delete_in_db": hashes_to_delete_in_db,
         }
+    
 
     def perform_bdd_delete(self, hashes_to_delete: list) -> dict:
-       
         if not hashes_to_delete:
             return {"deleted_total": 0, "deleted_hashes": [], "skipped_hashes": []}
 
@@ -120,7 +119,6 @@ class CommunService:
                         skipped_hashes.append(torrent_hash)
                         self.logger.info("[BBDD] nothing to remove for hash=%s (already absent)", torrent_hash)
                 except Exception as err:
-                    # per-hash failure -> mark as skipped but continue
                     self.logger.exception("[BBDD] failed to delete hash=%s: %s", torrent_hash, err)
                     skipped_hashes.append(torrent_hash)
 
@@ -149,8 +147,6 @@ class CommunService:
             "deleted_hashes": deleted_hashes,
             "skipped_hashes": skipped_hashes,
         }
-    
-
     
     # -----------------------------
     # Gotify helpers
