@@ -28,18 +28,8 @@ def get_redis():
     return _REDIS
 
 def init_extensions(app):
-    # init only Flask extensions here (no Celery config here)
     db.init_app(app)
     migrate.init_app(app, db)
-
-    try:
-        r = get_redis()
-        set_ok = r.set(RECONCILE_GUARD_KEY, str(int(time.time())), nx=True, ex=RECONCILE_GUARD_TTL)
-        if set_ok:
-            # do nothing here: reconcile should be scheduled explicitly by a process that wants it
-            pass
-    except Exception:
-        app.logger.exception("init_extensions: failed to set reconcile guard")
 
 def make_celery(app):
     celery.conf.broker_url = app.config.get("CELERY_BROKER_URL", CELERY_BROKER_URL)
@@ -57,5 +47,5 @@ def make_celery(app):
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
 
-    celery.conf.imports = ("app.tasks.deferred_tasks")
+    celery.conf.imports = ["app.tasks.deferred_tasks"]    
     return celery

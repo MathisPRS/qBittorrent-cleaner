@@ -53,11 +53,9 @@ class DeferredDeletionService:
 
     def _notify_deferred_deletion(self, deleted_raw, failed_raw, absent_raw) -> bool:
         try:
-            # build names lists if pairs (hash,name) provided, else empty lists
             deleted_names = [name for (_h, name) in deleted_raw] if deleted_raw and isinstance(deleted_raw[0], (list, tuple)) else []
             failed_names = [name for (_h, name) in failed_raw] if failed_raw and isinstance(failed_raw[0], (list, tuple)) else []
             absent_names = list(absent_raw or [])
-            # generic notify: title + placeholders
             self.commun_services._send_notify("Deferred deletions", "—", "—", deleted_names, [], failed_names, None)
             return True
         except Exception:
@@ -71,6 +69,7 @@ class DeferredDeletionService:
         if isinstance(first, (list, tuple)):
             return [h for (h, _n) in m if h]
         return [h for h in m if h]
+    
 
     def perform_deletion_deferred(self, hashes: List[str], notify: bool = True) -> Dict:
         result = {"requested": len(hashes), "qb_deleted": [], "qb_absent": [], "qb_failed": [], "removed_deferred": 0, "notify_sent": False}
@@ -90,8 +89,6 @@ class DeferredDeletionService:
         deleted_raw = qb_out.get("deleted", []) or []
         failed_raw = qb_out.get("failed", []) or []
         absent_raw = qb_out.get("absent", []) or []
-
-       
 
         qb_deleted = self.extract_hashes(deleted_raw)
         qb_failed = self.extract_hashes(failed_raw)
@@ -149,14 +146,11 @@ class DeferredDeletionService:
                 info = self.torrents_repo.get_by_hash(nh)
                 name = getattr(info, "name", None)
             except Exception:
-                # best-effort: if we can't read name, proceed with None
                 self.logger.debug("filter_deferred_deletion_hash: failed to resolve name for hash=%s", nh)
 
-            # do migration (create deferred row + remove torrent row)
             try:
                 self.migrate_deferred_torrent(nh, name=name)
             except Exception:
-                # do not break the loop; log and continue
                 self.logger.exception("filter_deferred_deletion_hash: migrate_deferred_torrent failed for hash=%s", nh)
 
         self.logger.info("filter_deferred_deletion_hash: ready_to_delete_count=%d deferred_count=%d", len(ready_to_delete), len(seen) - len(ready_to_delete))
@@ -171,7 +165,6 @@ class DeferredDeletionService:
         try:
             created_at = self.torrents_repo.get_attr_created_at_by_hash(torrent_hash)
         except Exception:
-            # si la lecture DB échoue, on évite de bloquer la suppression:
             self.logger.exception("calculate_delta: failed to fetch created_at for hash=%s -> consider ready", torrent_hash)
             return True
 
@@ -180,7 +173,6 @@ class DeferredDeletionService:
             self.logger.debug("calculate_delta: no created_at for hash=%s -> considered ready", torrent_hash)
             return True
 
-        # normalize timezone-aware -> naive UTC for comparison
         ca = created_at
         if getattr(ca, "tzinfo", None):
             try:
@@ -199,9 +191,6 @@ class DeferredDeletionService:
         return ready
 
 
-    ##############################
-    # Deferred
-    ##############################
     def migrate_deferred_torrent(self, torrent_hash: str, name: Optional[str] = None) -> None:
             if not torrent_hash:
                 self.logger.debug("migrate_deferred_torrent: empty hash -> skip")

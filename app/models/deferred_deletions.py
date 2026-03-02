@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, func, UniqueConstraint
 from ..extensions import db
 
-class DeferredDeletion(db.Model):
+class DeferredDeletions(db.Model):
     __tablename__ = "deferred_deletions"
 
     id = Column(Integer, primary_key=True)

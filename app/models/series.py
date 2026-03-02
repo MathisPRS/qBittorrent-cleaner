@@ -9,12 +9,10 @@ class Series(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    # on retire unique=True ici (contrainte déclarée dans __table_args__ avec un name)
     sonarr_id = db.Column(db.String(64), nullable=True)
     title = db.Column(db.String(512), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # relation vers les épisodes
     episodes = db.relationship(
         "Episodes",
         back_populates="series",

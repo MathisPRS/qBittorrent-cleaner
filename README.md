@@ -74,15 +74,7 @@ docker compose -f docker/docker-compose.yml up -d --build
 
 TO DO :
 - Fix Cross-seed delete
-- Add delete queue for wait 48 hours before delete for qbittorrent and BDD,
 - Move movie queue in "Discipline"
-- Parse Torrents in qbittorrent and leak cross-seed file to parents
+
 - 
-
-Sonarr :
-- Detecter quand c'est :
-        - un pack qui update un/des episodes
-        - un episode qui update un pack
-        - un pack qui update un pack
-        xœ
-
+       

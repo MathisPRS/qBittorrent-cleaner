@@ -4,3 +4,4 @@ configlocal.cfg
 **/__pycache__/
 /data
 .vscode
+/deploy/.env

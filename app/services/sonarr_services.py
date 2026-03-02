@@ -266,7 +266,7 @@ class SonarrService:
         hashes_to_delete: List[str] = []
         if old_torrent_id:
             try:
-                old_hashes = self.torrents_repo.find_hashes_to_delete(old_torrent_id)
+                old_hashes = self.torrents_repo.get_hashes_to_delete(old_torrent_id)
                 for h in old_hashes:
                     if not h:
                         continue

@@ -3,7 +3,7 @@ from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db
-from ..models.deferred_deletion import DeferredDeletion
+from ..models.deferred_deletions import DeferredDeletions
 from app.logger import get_logger
 
 logger = get_logger(__name__)
@@ -16,12 +16,12 @@ class DeferredDeletionsRepo:
             return False
 
         try:
-            existing = db.session.query(DeferredDeletion).filter_by(torrent_hash=torrent_hash).one_or_none()
+            existing = db.session.query(DeferredDeletions).filter_by(torrent_hash=torrent_hash).one_or_none()
             if existing:
                 logger.debug("create_if_not_exists: already exists for hash=%s", torrent_hash)
                 return False
 
-            row = DeferredDeletion(
+            row = DeferredDeletions(
                 name=name,
                 torrent_hash=torrent_hash,
                 can_be_deleted_at=can_be_deleted_at,
@@ -42,11 +42,11 @@ class DeferredDeletionsRepo:
             return False
         
 
-    def get_by_hash(self, torrent_hash: str) -> Optional[DeferredDeletion]:
+    def get_by_hash(self, torrent_hash: str) -> Optional[DeferredDeletions]:
         if not torrent_hash:
             return None
         try:
-            return db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).first()
+            return db.session.query(DeferredDeletions).filter(DeferredDeletions.torrent_hash == torrent_hash).first()
         except Exception:
             logger.exception("get_by_hash failed for %s", torrent_hash)
             return None
@@ -56,7 +56,7 @@ class DeferredDeletionsRepo:
         if not torrent_hash:
             return False
         try:
-            row = db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash == torrent_hash).one_or_none()
+            row = db.session.query(DeferredDeletions).filter(DeferredDeletions.torrent_hash == torrent_hash).one_or_none()
             if not row:
                 return False
             row.celery_task_id = task_id
@@ -73,9 +73,9 @@ class DeferredDeletionsRepo:
             return False
         
 
-    def list_batch(self, limit: int = 500, offset: int = 0) -> List[DeferredDeletion]:
+    def list_batch(self, limit: int = 500, offset: int = 0) -> List[DeferredDeletions]:
         try:
-            q = db.session.query(DeferredDeletion).order_by(DeferredDeletion.id).limit(limit).offset(offset)
+            q = db.session.query(DeferredDeletions).order_by(DeferredDeletions.id).limit(limit).offset(offset)
             return q.all()
         except Exception:
             logger.exception("list_batch failed (limit=%s offset=%s)", limit, offset)
@@ -88,7 +88,7 @@ class DeferredDeletionsRepo:
             return 0
 
         try:
-            query = db.session.query(DeferredDeletion).filter(DeferredDeletion.torrent_hash.in_(hashes))
+            query = db.session.query(DeferredDeletions).filter(DeferredDeletions.torrent_hash.in_(hashes))
             rows_deleted = query.delete(synchronize_session=False)
             db.session.commit()
 

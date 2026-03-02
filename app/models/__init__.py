@@ -2,6 +2,6 @@ from ..extensions import db
 from .movies import Movie
 from .series import Series
 from .torrents import Torrents
-from .deferred_deletion import DeferredDeletion
+from .deferred_deletions import DeferredDeletions
 
-__all__ = ["db", "Movie", "Series","Episodes", "Torrents", "DeferredDeletion"]
+__all__ = ["db", "Movie", "Series","Episodes", "Torrents", "DeferredDeletions"]
