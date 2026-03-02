@@ -1,4 +1,3 @@
-# app/tasks/deferred_tasks.py
 import time
 from datetime import datetime, timezone
 from typing import Optional
@@ -10,7 +9,6 @@ from celery.result import AsyncResult
 
 r = get_redis()
 deferred_repo = DeferredDeletionsRepo()
-deferred_service = DeferredDeletionService(app=current_app._get_current_object())
 LOCK_PREFIX = "deferred:lock:"
 
 def acquire_lock(lock_key: str, ttl: int = 60) -> bool:
@@ -28,6 +26,9 @@ def release_lock(lock_key: str) -> None:
 
 @celery.task(name="deferred.process_deferred_deletion", bind=True, max_retries=3)
 def process_deferred_deletion(self, torrent_hash: str):
+    deferred_service = DeferredDeletionService(app=current_app._get_current_object())
+
+
     lock_key = LOCK_PREFIX + torrent_hash
     if not acquire_lock(lock_key, ttl=120):
         current_app.logger.info("process_deferred_deletion: lock exists for %s -> skipping", torrent_hash)
