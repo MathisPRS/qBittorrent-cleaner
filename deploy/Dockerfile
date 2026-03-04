@@ -43,5 +43,5 @@ ENV CONFIG_FILE=/app/configlocal.cfg
 EXPOSE 8124
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/start.sh"]
-# default command (overridable in docker-compose for worker/beat)
+# default command (overridable in docker-compose for worker)
 CMD ["bash", "-lc", "flask db upgrade && python run.py"]

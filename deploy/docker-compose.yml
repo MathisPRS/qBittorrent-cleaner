@@ -82,29 +82,3 @@ services:
       - redis
     restart: unless-stopped
     working_dir: /app
-
-  celery-beat:
-    image: webhook-cleaner:latest
-    container_name: webhook-cleaner-beat
-    user: "${APP_UID:-1000}:${APP_GID:-1000}"
-    command: >
-      celery -A app.celery_worker.celery beat
-      --loglevel=info
-      -s /app/data/celerybeat-schedule
-    networks:
-      - media_net
-    volumes:
-      - ../configlocal.cfg:/app/configlocal.cfg:ro
-      - ../data:/app/data
-      - ../logs:/app/logs
-      - ../:/app:rw
-    environment:
-      - APP_UID=${APP_UID:-1000}
-      - APP_GID=${APP_GID:-1000}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - redis
-    restart: unless-stopped
-    working_dir: /app

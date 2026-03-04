@@ -183,6 +183,8 @@ class QbittorrentAdapter:
                     return "ygg"
                 if "nyaa.tracker.wf" in hostname:
                     return "nyaa"
+                if "c411.org" in hostname:
+                    return "c411"
 
             return None
         except Exception as e:
