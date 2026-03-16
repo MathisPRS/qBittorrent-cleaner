@@ -57,6 +57,25 @@ class QbittorrentAdapter:
             self.logger.exception("[qBittorrent] login failed (unexpected)")
             raise
 
+    def get_all_torrents(self) -> list[dict]:
+        try:
+            self.login()
+            torrents = self.client.torrents_info()
+
+            result = []
+            for t in torrents:
+                result.append({
+                    "hash": getattr(t, "hash", None),
+                    "name": getattr(t, "name", None),
+                    "category": getattr(t, "category", None),
+                    "tags": getattr(t, "tags", ""),
+                })
+
+            return result
+
+        except Exception:
+            self.logger.exception("[qBittorrent] get_all_torrents failed")
+            return []
 
     def info_map(self, hashes: List[str]) -> Dict[str, dict]:
         if not hashes:

@@ -14,20 +14,13 @@ class QbTorrentAuditService:
     def __init__(self, app):
         self.app = app
         self.logger = get_logger(__name__, app=app)
-
         self.qb = QbittorrentAdapter()
 
-    # ------------------------------------------------
-    # Public entrypoint
-    # ------------------------------------------------
+        self.ignored_categories = {"adultes", "autres"}
 
     def run(self):
-
         self.logger.info("===== START QB TORRENT AUDIT =====")
-
-        # DB torrents
         db_torrents = Torrents.query.all()
-
         db_hashes = {
             (t.hash or "").strip().lower()
             for t in db_torrents
@@ -35,81 +28,68 @@ class QbTorrentAuditService:
         }
 
         self.logger.info("DB torrents count: %s", len(db_hashes))
+        qb_torrents = self.qb.get_all_torrents()
+        self.logger.info("qBittorrent torrents count: %s", len(qb_torrents))
+        unknown_torrents = []
 
-        qb_hashes = self._get_qb_hashes()
+        for torrent in qb_torrents:
+            torrent_hash = (torrent.get("hash") or "").lower()
+            if not torrent_hash:
+                continue
+            category = (torrent.get("category") or "").lower()
 
-        self.logger.info("qBittorrent torrents count: %s", len(qb_hashes))
+            if category in self.ignored_categories:
+                continue
+            if torrent_hash not in db_hashes:
+                unknown_torrents.append(torrent)
 
-        unknown_hashes = qb_hashes - db_hashes
-
-        if not unknown_hashes:
+        if not unknown_torrents:
             self.logger.info("No unknown torrents found in qBittorrent")
         else:
-            self.logger.warning(
-                "Found %s torrent(s) present in qBittorrent but NOT in DB",
-                len(unknown_hashes),
-            )
-
-            self._print_unknown_torrents(unknown_hashes)
+            self._print_by_category(unknown_torrents)
 
         self.logger.info("===== END QB TORRENT AUDIT =====")
 
-    # ------------------------------------------------
+    def _print_by_category(self, torrents):
 
-    def _get_qb_hashes(self):
+        films = []
+        series = []
+        animes = []
+        cross_seed = []
 
-        self.qb.login()
+        for torrent in torrents:
 
-        try:
-            torrents = self.qb.client.torrents_info()
+            category = (torrent.get("category") or "").lower()
+            tags = (torrent.get("tags") or "").lower()
 
-            hashes = set()
+            if "cross-seed" in tags:
+                cross_seed.append(torrent)
+                continue
 
-            for t in torrents:
-                thash = getattr(t, "hash", None) or t.get("hash")
-                if thash:
-                    hashes.add(thash.lower())
+            if category == "films":
+                films.append(torrent)
+            elif category == "series":
+                series.append(torrent)
+            elif category == "animes":
+                animes.append(torrent)
 
-            return hashes
+        self._print_group("FILMS", films)
+        self._print_group("SERIES", series)
+        self._print_group("ANIMES", animes)
+        self._print_group("CROSS-SEED", cross_seed)
 
-        except Exception:
-            self.logger.exception("Failed to fetch torrents from qBittorrent")
-            return set()
+    def _print_group(self, title, torrents):
 
-    # ------------------------------------------------
+        if not torrents:
+            return
 
-    def _print_unknown_torrents(self, hashes):
+        self.logger.warning("----- %s (%s) -----", title, len(torrents))
 
-        info_map = self.qb.info_map(list(hashes))
-
-        for h in hashes:
-
-            data = info_map.get(h)
-
-            name = None
-            if data:
-                name = data.get("name")
-
+        for torrent in torrents:
             self.logger.warning(
-                "Unknown torrent -> hash=%s name=%s",
-                h,
-                name,
+                "hash=%s name=%s category=%s tags=%s",
+                torrent.get("hash"),
+                torrent.get("name"),
+                torrent.get("category"),
+                torrent.get("tags"),
             )
-
-
-# ------------------------------------------------
-# CLI entrypoint
-# ------------------------------------------------
-
-def main():
-
-    app = create_app()
-
-    with app.app_context():
-
-        service = QbTorrentAuditService(app)
-        service.run()
-
-
-if __name__ == "__main__":
-    main()
