@@ -3,12 +3,13 @@ import os
 from typing import  Optional
 
 
-from ..repositories.torrents_repo import TorrentsRepo
-from ..repositories.movies_repo import MoviesRepo
-from ..repositories.deferred_deletions_repo import DeferredDeletionsRepo
-from ..adapters.qbittorrent_adapter import QbittorrentAdapter
-from ..adapters.gotify_adapter import notify_gotify
-from ..extensions import db
+from app.repositories.torrents_repo import TorrentsRepo
+from app.repositories.movies_repo import MoviesRepo
+from app.repositories.deferred_deletions_repo import DeferredDeletionsRepo
+from app.adapters.qbittorrent_adapter import QbittorrentAdapter
+from app.adapters.gotify_adapter import notify_gotify
+from app.extensions import db
+from app.config import DEFFERED_DELETION_DELTA
 
 from app.logger import get_logger
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,7 +23,7 @@ class CommunService:
         self.movie_repo = MoviesRepo()
         self.deferred_deletion_repo = DeferredDeletionsRepo()
         self.qb = QbittorrentAdapter()
-        self.delta = timedelta(hours=48)
+        self.delta = timedelta(hours=DEFFERED_DELETION_DELTA)
 
     # -----------------------------
     # Deletion helpers

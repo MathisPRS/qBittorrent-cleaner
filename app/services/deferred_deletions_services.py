@@ -3,6 +3,7 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 from flask import current_app
 from typing import Optional
+from app.config import DEFFERED_DELETION_DELTA
 from app.repositories.deferred_deletions_repo import DeferredDeletionsRepo
 from app.repositories.torrents_repo import TorrentsRepo
 from app.logger import get_logger
@@ -21,7 +22,7 @@ class DeferredDeletionService:
 
         self.deferred_deletion_repo = DeferredDeletionsRepo()
         self.torrents_repo = TorrentsRepo()
-        self.delta = timedelta(hours=48)
+        self.delta = timedelta(hours=DEFFERED_DELETION_DELTA)
 
     def _now_utc(self) -> datetime:
         return datetime.utcnow()
@@ -123,37 +124,55 @@ class DeferredDeletionService:
             return []
 
         ready_to_delete: List[str] = []
-        seen = set()
+        seen_hashes = set()
+        instant_delete_indexers = {"nyaa", "torr9", "c411"}
 
-        for h in candidate_hashes:
-            nh = (h or "").strip().lower()
-            if not nh or nh in seen:
+        for torrent_hash in candidate_hashes:
+            normalized_hash = (torrent_hash or "").strip().lower()
+            if not normalized_hash or normalized_hash in seen_hashes:
                 continue
-            seen.add(nh)
+            seen_hashes.add(normalized_hash)
 
+            # Check indexer first
+            indexer = None
             try:
-                can_delete = self.calculate_delta(nh)
+                indexer = self.torrents_repo.get_indexer_from_hash(normalized_hash)
             except Exception:
-                self.logger.exception("filter_deferred_deletion_hash: calculate_delta failed for hash=%s -> marking ready", nh)
+                self.logger.exception("filter_deferred_deletion_hash: failed to get indexer for hash=%s", normalized_hash)
+            if indexer in instant_delete_indexers:
+                self.logger.info("filter_deferred_deletion_hash: instant delete allowed for hash=%s indexer=%s", normalized_hash, indexer)
+                ready_to_delete.append(normalized_hash)
+                continue
+
+            # ---------------------------------
+            # Normal seed-time logic
+            # ---------------------------------
+            try:
+                can_delete = self.calculate_delta(normalized_hash)
+            except Exception:
+                self.logger.exception("filter_deferred_deletion_hash: calculate_delta failed for hash=%s -> marking ready", normalized_hash)
                 can_delete = True
 
             if can_delete:
-                ready_to_delete.append(nh)
+                ready_to_delete.append(normalized_hash)
                 continue
 
+            # ---------------------------------
+            # Move to deferred deletion
+            # ---------------------------------
             name = None
             try:
-                info = self.torrents_repo.get_by_hash(nh)
+                info = self.torrents_repo.get_by_hash(normalized_hash)
                 name = getattr(info, "name", None)
             except Exception:
-                self.logger.debug("filter_deferred_deletion_hash: failed to resolve name for hash=%s", nh)
+                self.logger.debug("filter_deferred_deletion_hash: failed to resolve name for hash=%s", normalized_hash)
 
             try:
-                self.migrate_deferred_torrent(nh, name=name)
+                self.migrate_deferred_torrent(normalized_hash, name=name)
             except Exception:
-                self.logger.exception("filter_deferred_deletion_hash: migrate_deferred_torrent failed for hash=%s", nh)
+                self.logger.exception("filter_deferred_deletion_hash: migrate_deferred_torrent failed for hash=%s", normalized_hash)
 
-        self.logger.info("filter_deferred_deletion_hash: ready_to_delete_count=%d deferred_count=%d", len(ready_to_delete), len(seen) - len(ready_to_delete))
+        self.logger.info("filter_deferred_deletion_hash: ready_to_delete_count=%d deferred_count=%d", len(ready_to_delete), len(seen_hashes) - len(ready_to_delete))
         return ready_to_delete
 
 

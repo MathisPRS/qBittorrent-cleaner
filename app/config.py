@@ -27,6 +27,8 @@ LOG_LEVEL   = (cfg.get("general", "LOG_LEVEL", fallback="INFO") or "INFO").upper
 QBIT_HOST = cfg.get("qbittorrent", "HOST", fallback="http://qbittorrrent:8080").rstrip("/")
 QBIT_USER = cfg.get("qbittorrent", "USER" )
 QBIT_PASS = cfg.get("qbittorrent", "PASS")
+DEFFERED_DELETION_DELTA = cfg.get("qbittorrent", "DEFFERED_DELETION_DELTA")
+
 
 # Gotify
 GOTIFY_ENABLED = getbool("gotify", "ENABLED", False)

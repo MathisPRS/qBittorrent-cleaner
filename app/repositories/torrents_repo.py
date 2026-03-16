@@ -195,3 +195,12 @@ class TorrentsRepo:
             return getattr(row, "created_at", None) if row is not None else None
         except Exception:
             raise
+
+    def get_indexer_from_hash(self, torrent_hash: str):
+        if not torrent_hash:
+            return None
+        try:
+            indexer = db.session.query(Torrents.indexer).filter(Torrents.hash == torrent_hash)
+            return indexer.first()
+        except Exception:
+            raise
