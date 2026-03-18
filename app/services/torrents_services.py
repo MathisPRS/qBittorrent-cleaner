@@ -14,8 +14,6 @@ class TorrentService:
         self.app = app
         self.commun_service = CommunService(app)
         self.torrents_repo = TorrentsRepo()
-
-        # état stocké
         self.parent_torrent: Optional[int] = None
         self.cross_seed_torrent_name: Optional[str] = None
         self.cross_seed_torrent_hash: Optional[str] = None

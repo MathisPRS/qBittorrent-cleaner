@@ -8,3 +8,5 @@ requests
 qbittorrent-api
 celery
 redis
+guessit
+rapidfuzz
