@@ -2,6 +2,7 @@
 import time
 from redis import Redis
 from celery import Celery
+from celery.schedules import crontab
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -48,4 +49,12 @@ def make_celery(app):
     celery.Task = ContextTask
 
     celery.conf.imports = ["app.tasks.deferred_tasks", "app.tasks.detect_unpublish_torrents"]
+
+    celery.conf.beat_schedule = {
+        "daily-audit-sync-unknown-torrents": {
+            "task": "audit.sync_unknown_torrents",
+            "schedule": crontab(hour=20, minute=0),
+        },
+    }
+
     return celery

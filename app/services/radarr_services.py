@@ -19,10 +19,6 @@ class RadarrService:
         self.commun_service = CommunService(app)
         self.deferred_deletion_services = DeferredDeletionService(app)
         self.qb = QbittorrentAdapter()
-        self._old_torrent_name: Optional[str] = None
-        self._new_torrent_name: Optional[str] = None
-        self._movie_image_url: Optional[str] = None
-        self._new_torrent = None
 
 
     def import_completed_movie(self, dto: Dict) -> Dict:
@@ -32,12 +28,18 @@ class RadarrService:
             raise ValueError("torrent hash required")
 
         radarr_id = dto.get("radarr_id")
+        if not radarr_id:
+            self.logger.warning(
+                "import_completed_movie: no radarr_id — refusing to create orphan torrent/movie (hash=%s)",
+                torrent_hash,
+            )
+            return {"action": "skipped", "reason": "no_radarr_id"}
+
         title = dto.get("title")
-        self._movie_image_url = dto.get("image")
-        self._new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
+        movie_image_url = dto.get("image")
+        new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
         # Ensure torrent exist
-        torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)
-        self._new_torrent = torrent
+        torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=new_torrent_name)
 
         # find movie by radarr_id
         existing_movie = self.movies_repo.get_by_radarr_id(radarr_id) if radarr_id else None
@@ -45,8 +47,12 @@ class RadarrService:
         if existing_movie is None:
             return self.create_movie_and_link(radarr_id, title, torrent)
 
-        return self.update_existing_movie(existing_movie, torrent, torrent_hash)
-    
+        return self.update_existing_movie(
+            existing_movie, torrent, torrent_hash,
+            new_torrent_name=new_torrent_name,
+            movie_image_url=movie_image_url,
+        )
+
 
     def create_movie_and_link(self, radarr_id: Optional[str], title: str, torrent) -> Dict:
         movie = self.movies_repo.create(radarr_id=radarr_id, title=title, latest_torrent_id=torrent.id)
@@ -58,17 +64,25 @@ class RadarrService:
         self.logger.info("No deletion detected, no Gotify needed")
 
         return {"action": "created", "movie_id": movie.id, "torrent_id": torrent.id}
-    
 
-    def update_existing_movie(self, movie, new_torrent, torrent_hash: str) -> Dict:
+
+    def update_existing_movie(
+        self,
+        movie,
+        new_torrent,
+        torrent_hash: str,
+        new_torrent_name: Optional[str] = None,
+        movie_image_url: Optional[str] = None,
+    ) -> Dict:
         # --- 1) fetch current hash & old torrent name for notifications (best-effort)
         current_hash = None
+        old_torrent_name: Optional[str] = None
         if movie.latest_torrent_id:
             try:
                 cur = self.torrents_repo.get_by_id(movie.latest_torrent_id)
                 if cur:
                     current_hash = getattr(cur, "hash", None)
-                    self._old_torrent_name = getattr(cur, "name", None)
+                    old_torrent_name = getattr(cur, "name", None)
             except Exception:
                 self.logger.exception("update_existing_movie: failed to load current torrent by id=%s", movie.latest_torrent_id)
 
@@ -82,7 +96,12 @@ class RadarrService:
 
         # --- 3) if no previous torrent -> link and notify (no deletion work)
         if not movie.latest_torrent_id:
-            return self.link_movie_without_previous_torrent(movie, new_torrent)
+            return self.link_movie_without_previous_torrent(
+                movie, new_torrent,
+                old_torrent_name=old_torrent_name,
+                new_torrent_name=new_torrent_name,
+                movie_image_url=movie_image_url,
+            )
 
         # --- 4) There is an old torrent -> switch pointer to new torrent (DB update via repo)
         old_torrent_id = movie.latest_torrent_id
@@ -127,12 +146,12 @@ class RadarrService:
             try:
                 self.commun_service._send_notify(
                     movie.title,
-                    self._old_torrent_name or "—",
-                    self._new_torrent_name,
+                    old_torrent_name or "—",
+                    new_torrent_name,
                     deleted=[],
                     not_found=[],
                     failed=[],
-                    image_url=self._movie_image_url
+                    image_url=movie_image_url
                 )
             except Exception:
                 self.logger.exception("update_existing_movie: notify failed (non-blocking)")
@@ -145,10 +164,22 @@ class RadarrService:
             }
 
         # --- 7) delete ready hashes and notify (single helper)
-        return self.delete_ready_hashes_and_notify(ready_to_be_deleted, movie, old_torrent_id, new_torrent)
+        return self.delete_ready_hashes_and_notify(
+            ready_to_be_deleted, movie, old_torrent_id, new_torrent,
+            old_torrent_name=old_torrent_name,
+            new_torrent_name=new_torrent_name,
+            movie_image_url=movie_image_url,
+        )
 
 
-    def link_movie_without_previous_torrent(self, movie, new_torrent) -> Dict:
+    def link_movie_without_previous_torrent(
+        self,
+        movie,
+        new_torrent,
+        old_torrent_name: Optional[str] = None,
+        new_torrent_name: Optional[str] = None,
+        movie_image_url: Optional[str] = None,
+    ) -> Dict:
         try:
             updated = self.movies_repo.update_latest_torrent_id(movie.radarr_id, new_torrent.id)
             if not updated:
@@ -176,12 +207,12 @@ class RadarrService:
         try:
             self.commun_service._send_notify(
                 movie.title,
-                self._old_torrent_name or "—",
-                self._new_torrent_name,
+                old_torrent_name or "—",
+                new_torrent_name,
                 deleted=[],
                 not_found=[],
                 failed=[],
-                image_url=self._movie_image_url
+                image_url=movie_image_url
             )
         except Exception:
             self.logger.exception("link_movie_without_previous_torrent: notify failed (non-blocking)")
@@ -193,18 +224,27 @@ class RadarrService:
         }
 
 
-    def delete_ready_hashes_and_notify(self, ready_hashes: list, movie, old_torrent_id: Optional[int], new_torrent) -> Dict:
+    def delete_ready_hashes_and_notify(
+        self,
+        ready_hashes: list,
+        movie,
+        old_torrent_id: Optional[int],
+        new_torrent,
+        old_torrent_name: Optional[str] = None,
+        new_torrent_name: Optional[str] = None,
+        movie_image_url: Optional[str] = None,
+    ) -> Dict:
 
         result = self.commun_service.perform_deletion(ready_hashes)
         try:
             self.commun_service._send_notify(
                 movie.title,
-                self._old_torrent_name or "—",
-                self._new_torrent_name,
+                old_torrent_name or "—",
+                new_torrent_name,
                 result["deleted_names"],
                 result["absent_names"],
                 result["failed_names"],
-                self._movie_image_url
+                movie_image_url
             )
         except Exception:
             self.logger.exception("delete_ready_hashes_and_notify: notify failed (non-blocking)")

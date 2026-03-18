@@ -26,7 +26,11 @@ from app.logger import get_logger
 from app.models.torrents import Torrents
 from app.adapters.qbittorrent_adapter import QbittorrentAdapter
 from app.services.torrents_resolver_services import TorrentResolverService
-from app.services.ingest_service import IngestService
+from app.services.radarr_services import RadarrService
+from app.services.sonarr_services import SonarrService
+from app.services.commun_services import CommunService
+from app.repositories.torrents_repo import TorrentsRepo
+from app.adapters.gotify_adapter import notify_gotify
 
 
 # Categories qBittorrent uses for each content type
@@ -55,7 +59,11 @@ class QbTorrentAuditService:
         self.logger = get_logger(__name__, app=app)
         self.qb = QbittorrentAdapter()
         self.resolver = TorrentResolverService(app)
-        self.ingest = IngestService(app)
+        self.radarr_service = RadarrService(app)
+        self.sonarr_service = SonarrService(app)
+        self.commun_service = CommunService(app)
+        self.torrents_repo = TorrentsRepo()
+        self._unresolved: list = []
 
     # ----------------------------------------------------------------
     # Public entrypoint
@@ -119,6 +127,14 @@ class QbTorrentAuditService:
             "total_unknown=%d ingested=%d skipped=%d failed=%d",
             total_unknown, stats["ingested"], stats["skipped"], stats["failed"],
         )
+
+        if self._unresolved:
+            try:
+                lines = [f"{item['name']} — {item['reason']}" for item in self._unresolved]
+                notify_gotify("Webhook Cleaner : Audit — torrents non résolus", lines)
+            except Exception:
+                self.logger.exception("[Audit] Failed to send Gotify notification for unresolved torrents")
+
         return {
             "total_unknown": total_unknown,
             "ingested": stats["ingested"],
@@ -141,6 +157,7 @@ class QbTorrentAuditService:
             reason = (resolution or {}).get("reason", "resolve_failed")
             self.logger.warning("[Audit] FILM unresolved: hash=%s name=%s reason=%s",
                                 hash_, name, reason)
+            self._unresolved.append({"name": name, "hash": hash_, "reason": reason})
             stats["skipped"] += 1
             return
 
@@ -159,7 +176,13 @@ class QbTorrentAuditService:
             stats["skipped"] += 1
             return
 
-        result = self.ingest.ingest_movie(hash_, name, resolution)
+        dto = {
+            "torrent": {"hash": hash_, "sourcePath": name},
+            "radarr_id": resolution.get("radarr_id"),
+            "title": resolution.get("radarr_title") or resolution.get("title"),
+            "image": None,
+        }
+        result = self.radarr_service.import_completed_movie(dto)
         self._record_stats(result, stats, hash_, name)
 
     def _process_series(self, torrent: dict, stats: dict) -> None:
@@ -173,6 +196,7 @@ class QbTorrentAuditService:
             reason = (resolution or {}).get("reason", "resolve_failed")
             self.logger.warning("[Audit] SERIES unresolved: hash=%s name=%s reason=%s",
                                 hash_, name, reason)
+            self._unresolved.append({"name": name, "hash": hash_, "reason": reason})
             stats["skipped"] += 1
             return
 
@@ -194,7 +218,14 @@ class QbTorrentAuditService:
             stats["skipped"] += 1
             return
 
-        result = self.ingest.ingest_series(hash_, name, resolution)
+        dto = {
+            "torrent": {"hash": hash_, "sourcePath": name},
+            "sonarr_id": resolution.get("sonarr_id"),
+            "title": resolution.get("sonarr_title") or resolution.get("title"),
+            "image": None,
+            "episodes": resolution.get("episodes") or [],
+        }
+        result = self.sonarr_service.import_completed_episodes(dto)
         self._record_stats(result, stats, hash_, name)
 
     def _process_cross_seed(self, torrent: dict, stats: dict) -> None:
@@ -208,8 +239,49 @@ class QbTorrentAuditService:
             stats["skipped"] += 1
             return
 
-        result = self.ingest.ingest_cross_seed(hash_, name)
-        self._record_stats(result, stats, hash_, name)
+        # Find parent by name (no parent_hash available during audit)
+        parent = None
+        try:
+            parent = self.torrents_repo.get_parent_by_name(name=name, parent_hash=None)
+        except Exception:
+            self.logger.exception("[Audit] get_parent_by_name failed for name=%s", name)
+
+        if parent is None:
+            self.logger.warning(
+                "[Audit] Cross-seed parent NOT found for name=%s hash=%s — skipping", name, hash_
+            )
+            stats["skipped"] += 1
+            return
+
+        # Ensure child torrent row exists
+        child = self.commun_service.ensure_torrent_exists(hash_, name)
+        if not child:
+            self.logger.error("[Audit] Could not create child torrent row for hash=%s", hash_)
+            stats["failed"] += 1
+            return
+
+        # Link child → parent
+        try:
+            linked = self.torrents_repo.set_cross_seed_parent(
+                child_hash=hash_,
+                parent_id=parent.id,
+                child_name=name,
+            )
+        except Exception:
+            self.logger.exception("[Audit] set_cross_seed_parent failed for hash=%s", hash_)
+            stats["failed"] += 1
+            return
+
+        if linked:
+            self.logger.info(
+                "[Audit] Cross-seed linked: child_hash=%s parent_id=%s", hash_, parent.id
+            )
+            stats["ingested"] += 1
+        else:
+            self.logger.warning(
+                "[Audit] Cross-seed link failed for child_hash=%s parent_id=%s", hash_, parent.id
+            )
+            stats["failed"] += 1
 
     # ----------------------------------------------------------------
     # Classify
@@ -261,17 +333,16 @@ class QbTorrentAuditService:
             stats["failed"] += 1
             return
 
-        if result.get("ok"):
-            action = result.get("action", "ingested")
-            if action == "skipped":
-                stats["skipped"] += 1
-            else:
-                stats["ingested"] += 1
-            self.logger.info("[Audit] %s: hash=%s name=%s", action, hash_, name)
-        else:
-            reason = result.get("reason", "unknown")
-            self.logger.warning("[Audit] Ingest failed: hash=%s name=%s reason=%s", hash_, name, reason)
+        action = result.get("action", "")
+        if action == "error":
+            self.logger.warning("[Audit] Ingest failed: hash=%s name=%s result=%s", hash_, name, result)
             stats["failed"] += 1
+        elif action == "ignored":
+            self.logger.info("[Audit] ignored (already up-to-date): hash=%s name=%s", hash_, name)
+            stats["skipped"] += 1
+        else:
+            self.logger.info("[Audit] %s: hash=%s name=%s", action, hash_, name)
+            stats["ingested"] += 1
 
     # ----------------------------------------------------------------
     # qBittorrent helpers

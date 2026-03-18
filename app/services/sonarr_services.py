@@ -19,10 +19,6 @@ class SonarrService:
         self.qb_adapter = QbittorrentAdapter()
         self.commun_service = CommunService(app)
         self.deferred_deletion_services = DeferredDeletionService(app)
-        self._old_torrent_name: Optional[str] = None
-        self._new_torrent_name: Optional[str] = None
-        self._series_image_url: Optional[str] = None
-        self._new_torrent = None
 
     def import_completed_episodes(self, dto: Dict) -> Dict:
         torrent_info = dto.get("torrent")
@@ -31,20 +27,30 @@ class SonarrService:
 
         torrent_hash = torrent_info["hash"]
         sonarr_id = dto.get("sonarr_id")
+        if not sonarr_id:
+            self.logger.warning(
+                "import_completed_episodes: no sonarr_id — refusing to create orphan torrent/series (hash=%s)",
+                torrent_hash,
+            )
+            return {"action": "skipped", "reason": "no_sonarr_id"}
+
         series_title = dto.get("title")
-        self._series_image_url = dto.get("image")
-        self._new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
+        series_image_url = dto.get("image")
+        new_torrent_name = self.commun_service.get_torrent_name_from_json(dto)
 
         # Ensure torrent DB row exists (and returns torrent object with id/hash/name)
-        torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=self._new_torrent_name)
-        self._new_torrent = torrent
+        torrent = self.commun_service.ensure_torrent_exists(torrent_hash, name=new_torrent_name)
 
         # find series by sonarr_id (stored as string in Series.sonarr_id)
         existing_series = self.series_repo.get_by_sonarr_id(sonarr_id) if sonarr_id else None
         if existing_series is None:
             return self.create_series_and_create_episodes(sonarr_id, series_title, torrent, dto)
 
-        return self.update_existing_series_episodes(existing_series, torrent, dto)
+        return self.update_existing_series_episodes(
+            existing_series, torrent, dto,
+            new_torrent_name=new_torrent_name,
+            series_image_url=series_image_url,
+        )
 
 
     def create_series_and_create_episodes(self, sonarr_id: Optional[str], series_title: str, torrent, dto: Dict) -> Dict:
@@ -102,13 +108,21 @@ class SonarrService:
                 )
 
         return created
-    
 
-    def update_existing_series_episodes(self, series_obj, new_torrent, dto: Dict) -> Dict:
+
+    def update_existing_series_episodes(
+        self,
+        series_obj,
+        new_torrent,
+        dto: Dict,
+        new_torrent_name: Optional[str] = None,
+        series_image_url: Optional[str] = None,
+    ) -> Dict:
         hashes_to_delete: List[str] = []
         updated_episodes: List[str] = []
         created_episodes: List[str] = []
         failed_episodes: List[str] = []
+        old_torrent_name: Optional[str] = None
 
         self.logger.info(
             "update_existing_series_episodes: syncing series id=%s sonarr_id=%s",
@@ -135,6 +149,9 @@ class SonarrService:
                 created_episodes.append(ep_key)
             elif action == "updated":
                 updated_episodes.append(ep_key)
+                # capture old_torrent_name from the first episode that had one
+                if old_torrent_name is None:
+                    old_torrent_name = result.get("old_torrent_name")
                 old_hashes = result.get("hashes_to_delete", []) or []
                 for h in old_hashes:
                     if not h:
@@ -175,12 +192,12 @@ class SonarrService:
             try:
                 self.commun_service._send_notify(
                     series_obj.title,
-                    self._old_torrent_name,
-                    self._new_torrent_name,
+                    old_torrent_name,
+                    new_torrent_name,
                     deleted=[],            # nothing deleted now
                     not_found=created_episodes,
                     failed=[],
-                    image_url=self._series_image_url
+                    image_url=series_image_url
                 )
             except Exception:
                 self.logger.exception("update_existing_series_episodes: notify failed (non-blocking)")
@@ -195,8 +212,14 @@ class SonarrService:
             }
 
         # Delete ready hashes and notify (single helper)
-        return self.delete_ready_hashes_and_notify(ready_to_be_deleted, series_obj, new_torrent, updated_episodes, created_episodes, failed_episodes)
-    
+        return self.delete_ready_hashes_and_notify(
+            ready_to_be_deleted, series_obj, new_torrent,
+            updated_episodes, created_episodes, failed_episodes,
+            old_torrent_name=old_torrent_name,
+            new_torrent_name=new_torrent_name,
+            series_image_url=series_image_url,
+        )
+
 
     def process_single_episode(self, series_obj, season: int, episode_num: int, payload_ep: Dict, new_torrent) -> Dict:
         ep_identifier = f"S{season:02d}E{episode_num:02d}"
@@ -234,12 +257,13 @@ class SonarrService:
 
         # episode exists -> check current latest torrent hash
         current_hash = None
+        old_torrent_name: Optional[str] = None
         if episode.latest_torrent_id:
             try:
                 cur_t = self.torrents_repo.get_by_id(episode.latest_torrent_id)
                 if cur_t:
                     current_hash = getattr(cur_t, "hash", None)
-                    self._old_torrent_name = getattr(cur_t, "name", None)
+                    old_torrent_name = getattr(cur_t, "name", None)
             except Exception:
                 self.logger.exception("process_single_episode: failed to load current torrent for episode %s", ep_identifier)
 
@@ -279,11 +303,22 @@ class SonarrService:
                     old_torrent_id
                 )
 
-        return {"action": "updated", "hashes_to_delete": hashes_to_delete}
-    
-    
-    def delete_ready_hashes_and_notify(self,ready_hashes: List[str],series_obj,new_torrent, updated_episodes: List[str], created_episodes: List[str],failed_episodes: List[str]) -> Dict:
-        
+        return {"action": "updated", "hashes_to_delete": hashes_to_delete, "old_torrent_name": old_torrent_name}
+
+
+    def delete_ready_hashes_and_notify(
+        self,
+        ready_hashes: List[str],
+        series_obj,
+        new_torrent,
+        updated_episodes: List[str],
+        created_episodes: List[str],
+        failed_episodes: List[str],
+        old_torrent_name: Optional[str] = None,
+        new_torrent_name: Optional[str] = None,
+        series_image_url: Optional[str] = None,
+    ) -> Dict:
+
         result = self.commun_service.perform_deletion(ready_hashes)
 
         # Résultats de perform_deletion (contrat)
@@ -295,12 +330,12 @@ class SonarrService:
         try:
             self.commun_service._send_notify(
                 series_obj.title,
-                self._old_torrent_name,
-                self._new_torrent_name,
+                old_torrent_name,
+                new_torrent_name,
                 deleted_names,
                 created_episodes,   # not_found / newly created episodes
                 failed_names,
-                self._series_image_url
+                series_image_url
             )
         except Exception:
             self.logger.exception("delete_ready_hashes_and_notify: notify failed (non-blocking)")
@@ -308,7 +343,7 @@ class SonarrService:
         return {
             "action": "replace_and_cleanup",
             "series_id": series_obj.id,
-            "new_torrent_id": getattr(self._new_torrent, "id", None) or getattr(new_torrent, "id", None),
+            "new_torrent_id": getattr(new_torrent, "id", None),
             "deleted_db_rows": deleted_db_rows,
             "deleted_episodes": updated_episodes,
             "created_episodes": created_episodes,

@@ -21,7 +21,7 @@ class TorrentsRepo:
 
     def get_by_id(self, id_: int) -> Optional[Torrents]:
         try:
-            return db.session.query(Torrents).get(id_)
+            return db.session.get(Torrents, id_)
         except Exception:
             self.logger.exception("[BBDD] get_by_id failed for %s", id_)
             return None
@@ -196,11 +196,11 @@ class TorrentsRepo:
         except Exception:
             raise
 
-    def get_indexer_from_hash(self, torrent_hash: str):
+    def get_indexer_from_hash(self, torrent_hash: str) -> Optional[str]:
         if not torrent_hash:
             return None
         try:
-            indexer = db.session.query(Torrents.indexer).filter(Torrents.hash == torrent_hash)
-            return indexer.first()
+            row = db.session.query(Torrents.indexer).filter(Torrents.hash == torrent_hash).first()
+            return row.indexer if row else None
         except Exception:
             raise

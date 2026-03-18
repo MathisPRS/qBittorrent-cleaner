@@ -1,5 +1,5 @@
 # app/services/deferred_deletion_service.py
-from typing import List, Dict
+from typing import List, Dict, Callable
 from datetime import datetime, timedelta
 from flask import current_app
 from typing import Optional
@@ -14,18 +14,19 @@ logger = get_logger(__name__)
 
 
 class DeferredDeletionService:
-    def __init__(self, app=None):
+    def __init__(self, app=None, _clock: Callable[[], datetime] = datetime.utcnow):
         self.app = app or current_app._get_current_object()
         self.logger = get_logger(__name__, app=self.app)
         self.commun_services = CommunService(self.app)
         self.scheduler_services = SchedulerService(self.app)
+        self._clock = _clock
 
         self.deferred_deletion_repo = DeferredDeletionsRepo()
         self.torrents_repo = TorrentsRepo()
         self.delta = timedelta(hours=DEFFERED_DELETION_DELTA)
 
     def _now_utc(self) -> datetime:
-        return datetime.utcnow()
+        return self._clock()
 
     def _is_deletable(self, can_be_deleted_at) -> bool:
         if not can_be_deleted_at:
@@ -200,7 +201,7 @@ class DeferredDeletionService:
                 # fallback keep as-is
                 pass
 
-        now = datetime.utcnow()
+        now = self._clock()
         age = now - ca
         ready = age >= self.delta
         self.logger.debug(
@@ -215,7 +216,7 @@ class DeferredDeletionService:
                 self.logger.debug("migrate_deferred_torrent: empty hash -> skip")
                 return
 
-            now = datetime.utcnow()
+            now = self._clock()
             try:
                 created_at = self.torrents_repo.get_attr_created_at_by_hash(torrent_hash)
             except Exception:

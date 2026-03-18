@@ -216,6 +216,8 @@ class CommunService:
     
     def get_torrent_name_from_json(self, dto: dict) -> str | None:
         release = dto.get("torrent")
+        if release is None:
+            return None
         source_path = release.get("sourcePath")
         if source_path:
             name_torrent = os.path.basename(source_path.rstrip("/\\"))

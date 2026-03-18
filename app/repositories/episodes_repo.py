@@ -25,7 +25,7 @@ class EpisodesRepo:
         if not episode_id:
             return None
         try:
-            return db.session.query(Episodes).get(episode_id)
+            return db.session.get(Episodes, episode_id)
         except Exception:
             logger.exception("[BBDD] get_by_id failed for episode_id=%s", episode_id)
             return None

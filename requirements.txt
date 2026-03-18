@@ -10,3 +10,7 @@ celery
 redis
 guessit
 rapidfuzz
+
+# testing
+pytest
+pytest-flask
