@@ -61,6 +61,9 @@ REDIS_URL = cfg.get("redis", "URL")
 CELERY_BROKER_URL = cfg.get("redis", "CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = cfg.get("redis", "CELERY_RESULT_BACKEND")
 
+# Celery
+AUDIT_ENABLED = getbool("celery", "AUDIT_ENABLED", False)
+
 def configure_app(app, config_filename: str | None = None):
     app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS

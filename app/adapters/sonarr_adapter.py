@@ -117,6 +117,25 @@ class SonarrAdapter:
         return result
 
     # ------------------------------------------------
+    # QUEUE
+    # ------------------------------------------------
+
+    def get_queue(self, page_size: int = 500) -> list[dict]:
+        """
+        Returns all records currently in the Sonarr download queue (any status:
+        downloading, importing, manualImport, delay, failed, etc.).
+
+        Each record contains at minimum a 'downloadId' field (the torrent hash).
+        """
+        data = self._get(
+            "/api/v3/queue",
+            params={"pageSize": page_size, "includeUnknownSeriesItems": "true"},
+        )
+        if not data:
+            return []
+        return data.get("records", [])
+
+    # ------------------------------------------------
     # CACHE
     # ------------------------------------------------
 

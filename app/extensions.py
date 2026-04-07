@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
-from .config import REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+from .config import REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, AUDIT_ENABLED
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -50,11 +50,14 @@ def make_celery(app):
 
     celery.conf.imports = ["app.tasks.deferred_tasks", "app.tasks.detect_unpublish_torrents"]
 
-    celery.conf.beat_schedule = {
-        "daily-audit-sync-unknown-torrents": {
-            "task": "audit.sync_unknown_torrents",
-            "schedule": crontab(hour=20, minute=0),
-        },
-    }
+    if AUDIT_ENABLED:
+        celery.conf.beat_schedule = {
+            "daily-audit-sync-unknown-torrents": {
+                "task": "audit.sync_unknown_torrents",
+                "schedule": crontab(hour=20, minute=0),
+            },
+        }
+    else:
+        celery.conf.beat_schedule = {}
 
     return celery
