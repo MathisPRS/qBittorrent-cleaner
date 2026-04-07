@@ -58,6 +58,19 @@ class QbittorrentAdapter:
             raise
 
     def get_all_torrents(self) -> list[dict]:
+        """
+        Returns all torrents from qBittorrent with their full metadata.
+
+        Fields returned per torrent:
+          - hash          : lowercase infohash
+          - name          : torrent display name
+          - category      : qBittorrent category (films, series, animes, …)
+          - tags          : comma-separated tag string
+          - content_path  : absolute path to the torrent content on disk
+                            (file path for single-file torrents, directory otherwise)
+          - state         : qBittorrent state string (uploading, stalledUP,
+                            downloading, pausedDL, …)
+        """
         try:
             self.login()
             torrents = self.client.torrents_info()
@@ -65,10 +78,12 @@ class QbittorrentAdapter:
             result = []
             for t in torrents:
                 result.append({
-                    "hash": getattr(t, "hash", None),
-                    "name": getattr(t, "name", None),
-                    "category": getattr(t, "category", None),
-                    "tags": getattr(t, "tags", ""),
+                    "hash":         (getattr(t, "hash", None) or "").lower(),
+                    "name":         getattr(t, "name", None),
+                    "category":     getattr(t, "category", None) or "",
+                    "tags":         getattr(t, "tags", "") or "",
+                    "content_path": getattr(t, "content_path", None) or "",
+                    "state":        getattr(t, "state", None) or "",
                 })
 
             return result
