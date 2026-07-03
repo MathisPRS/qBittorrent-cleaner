@@ -16,6 +16,7 @@ class SonarrAdapter:
             "X-Api-Key": self.api_key,
             "Content-Type": "application/json"
         })
+        self.timeout = (5, 30)  # (connect, read) secondes -- evite qu'un Sonarr injoignable fige le webhook
 
     # ------------------------------------------------
     # INTERNAL
@@ -25,7 +26,7 @@ class SonarrAdapter:
         url = f"{self.base}{path}"
 
         try:
-            resp = self.session.get(url, params=params)
+            resp = self.session.get(url, params=params, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
 

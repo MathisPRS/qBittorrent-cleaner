@@ -14,6 +14,7 @@ class RadarrAdapter:
         self.logger = get_logger(__name__)
         self.session = requests.Session()
         self.session.headers.update({"X-Api-Key": self.api_key})
+        self.timeout = (5, 30)  # (connect, read) secondes
 
     # -----------------------------
     # INTERNAL
@@ -22,7 +23,7 @@ class RadarrAdapter:
     def _get(self, path: str, params: dict = None) -> Any:
         url = f"{self.base}{path}"
         try:
-            resp = self.session.get(url, params=params)
+            resp = self.session.get(url, params=params, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
         except Exception:

@@ -141,48 +141,45 @@ class QbittorrentAdapter:
             self.logger.exception("[qBittorrent] delete_torrents: login failed")
             return {"error": "login_failed", "deleted": [], "failed": [], "absent": []}
 
-        deleted = []
-        failed = []
-        absent = []
-
+        # Snapshot avant suppression : distingue absent / deleted / failed
         try:
             info_before = self.info_map(hashes_norm)
         except Exception:
             info_before = {}
 
-        for h in hashes_norm:
-            try:
-                if h not in info_before:
-                    absent.append(h)
-                    self.logger.info("[qBittorrent] absent (not present) hash=%s", h)
-                    continue
-                try:
-                    self.client.torrents_delete(torrent_hashes=h, delete_files=bool(delete_files))
-                except Exception as e:
-                    self.logger.exception("[qBittorrent] delete API call failed for hash=%s: %s", h, e)
-                    name = (info_before.get(h) or {}).get("name")
-                    failed.append((h, name))
-                    continue
-                try:
-                    info_after = self.info_map([h])
-                except Exception:
-                    info_after = {}
+        present = [h for h in hashes_norm if h in info_before]
+        absent = [h for h in hashes_norm if h not in info_before]
+        for h in absent:
+            self.logger.info("[qBittorrent] absent (not present) hash=%s", h)
 
-                name_before = (info_before.get(h) or {}).get("name", f"<{h[:12]}>")
-                if h not in info_after:
-                    deleted.append((h, name_before))
-                    self.logger.info("[qBittorrent] deleted hash=%s name=%s", h, name_before)
-                else:
-                    failed.append((h, name_before))
-                    self.logger.warning("[qBittorrent] failed to delete hash=%s name=%s", h, name_before)
+        deleted = []
+        failed = []
 
-            except Exception as e:
-                self.logger.exception("[qBittorrent] unexpected error handling hash=%s: %s", h, e)
-                try:
-                    name_try = (info_before.get(h) or {}).get("name", None)
-                except Exception:
-                    name_try = None
-                failed.append((h, name_try))
+        if not present:
+            return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
+
+        # Suppression groupee en UN seul appel API (au lieu d'un appel par hash)
+        try:
+            self.client.torrents_delete(torrent_hashes=present, delete_files=bool(delete_files))
+        except Exception as e:
+            self.logger.exception("[qBittorrent] batch delete API call failed for %d hash(es): %s", len(present), e)
+            failed = [(h, (info_before.get(h) or {}).get("name")) for h in present]
+            return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
+
+        # Verification en UN seul appel : disparu = supprime, present = echec
+        try:
+            info_after = self.info_map(present)
+        except Exception:
+            info_after = {}
+
+        for h in present:
+            name_before = (info_before.get(h) or {}).get("name", f"<{h[:12]}>")
+            if h not in info_after:
+                deleted.append((h, name_before))
+                self.logger.info("[qBittorrent] deleted hash=%s name=%s", h, name_before)
+            else:
+                failed.append((h, name_before))
+                self.logger.warning("[qBittorrent] failed to delete hash=%s name=%s", h, name_before)
 
         return {"error": None, "deleted": deleted, "failed": failed, "absent": absent}
            

@@ -1,15 +1,32 @@
 # app/extensions.py
 import time
+import sqlite3
 from redis import Redis
 from celery import Celery
 from celery.schedules import crontab
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 from .config import REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND, AUDIT_ENABLED
 
 db = SQLAlchemy()
 migrate = Migrate()
+
+
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragmas(dbapi_connection, connection_record):
+    # SQLite uniquement : WAL + busy_timeout pour eviter les "database is locked"
+    # (API Flask + worker Celery + beat accedent au meme fichier app.db).
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+        finally:
+            cursor.close()
 
 # create an unconfigured Celery instance (we'll configure it with make_celery)
 celery = Celery(__name__)

@@ -51,8 +51,7 @@ class TorrentsRepo:
 
         torrent = Torrents(hash=hv, name=name, indexer=indexer)
         try:
-            db.session.add(torrent) 
-            db.session.flush()
+            db.session.add(torrent)
             db.session.commit()
             self.logger.info("[BBDD] Created Torrent id=%s hash=%s name=%s indexer=%s", torrent.id, torrent.hash, torrent.name, torrent.indexer)
             return torrent
