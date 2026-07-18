@@ -59,6 +59,11 @@ def make_celery(app):
 
     celery.conf.update(app.config)
 
+    # Redis broker : le visibility_timeout DOIT dépasser le plus long ETA de tâche
+    # différée (DEFFERED_DELETION_DELTA = 73h), sinon Redis considère la tâche "perdue"
+    # et la redélivre en boucle toutes les heures jusqu'à son ETA. 7 jours = marge sûre.
+    celery.conf.broker_transport_options = {"visibility_timeout": 7 * 24 * 3600}
+
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
