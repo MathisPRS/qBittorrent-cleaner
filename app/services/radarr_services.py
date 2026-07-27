@@ -5,6 +5,7 @@ from app.services.deferred_deletions_services import DeferredDeletionService
 from ..repositories.torrents_repo import TorrentsRepo
 from ..repositories.movies_repo import MoviesRepo
 from ..adapters.qbittorrent_adapter import QbittorrentAdapter
+from ..adapters.radarr_adapter import RadarrAdapter
 from ..extensions import db
 from app.logger import get_logger
 
@@ -19,6 +20,7 @@ class RadarrService:
         self.commun_service = CommunService(app)
         self.deferred_deletion_services = DeferredDeletionService(app)
         self.qb = QbittorrentAdapter()
+        self.radarr = RadarrAdapter()
 
 
     def import_completed_movie(self, dto: Dict) -> Dict:
@@ -45,13 +47,22 @@ class RadarrService:
         existing_movie = self.movies_repo.get_by_radarr_id(radarr_id) if radarr_id else None
 
         if existing_movie is None:
-            return self.create_movie_and_link(radarr_id, title, torrent)
+            result = self.create_movie_and_link(radarr_id, title, torrent)
+        else:
+            result = self.update_existing_movie(
+                existing_movie, torrent, torrent_hash,
+                new_torrent_name=new_torrent_name,
+                movie_image_url=movie_image_url,
+            )
 
-        return self.update_existing_movie(
-            existing_movie, torrent, torrent_hash,
-            new_torrent_name=new_torrent_name,
-            movie_image_url=movie_image_url,
-        )
+        # Import/upgrade => le film a désormais un torrent hardlinké => tag `seed`
+        # (idempotent : sur un upgrade il est déjà `seed`). Non bloquant.
+        try:
+            self.radarr.set_movie_tags(radarr_id, add=["seed"], remove=["noseed"])
+        except Exception:
+            self.logger.exception("import_completed_movie: pose du tag seed échouée (non bloquant)")
+
+        return result
 
 
     def create_movie_and_link(self, radarr_id: Optional[str], title: str, torrent) -> Dict:

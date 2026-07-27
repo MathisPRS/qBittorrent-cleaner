@@ -42,6 +42,7 @@ services:
       - ../data:/app/data
       - ../logs:/app/logs
       - ../:/app:rw
+      - /mnt/nas/Media:/nas-omv:ro
     environment:
       - APP_UID=${APP_UID:-1000}
       - APP_GID=${APP_GID:-1000}
@@ -78,6 +79,7 @@ services:
       - ../data:/app/data
       - ../logs:/app/logs
       - ../:/app:rw
+      - /mnt/nas/Media:/nas-omv:ro
     environment:
       - APP_UID=${APP_UID:-1000}
       - APP_GID=${APP_GID:-1000}
@@ -110,6 +112,7 @@ services:
       - ../data:/app/data
       - ../logs:/app/logs
       - ../:/app:rw
+      - /mnt/nas/Media:/nas-omv:ro
     environment:
       - APP_UID=${APP_UID:-1000}
       - APP_GID=${APP_GID:-1000}

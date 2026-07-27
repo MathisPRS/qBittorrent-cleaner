@@ -70,16 +70,25 @@ def make_celery(app):
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
 
-    celery.conf.imports = ["app.tasks.deferred_tasks", "app.tasks.detect_unpublish_torrents"]
+    celery.conf.imports = [
+        "app.tasks.deferred_tasks",
+        "app.tasks.detect_unpublish_torrents",
+        "app.tasks.seed_tags",
+    ]
 
+    # Reconcile des tags seed/noseed 2x/jour. Celery est en UTC → 08:00/20:00 UTC
+    # ≈ 10h/22h Europe-Paris (UTC+2 été). Filet de sécurité (suppressions + dérive).
+    beat = {
+        "reconcile-seed-tags": {
+            "task": "seed.reconcile_seed_tags",
+            "schedule": crontab(hour="8,20", minute=0),
+        },
+    }
     if AUDIT_ENABLED:
-        celery.conf.beat_schedule = {
-            "daily-audit-sync-unknown-torrents": {
-                "task": "audit.sync_unknown_torrents",
-                "schedule": crontab(hour=20, minute=0),
-            },
+        beat["daily-audit-sync-unknown-torrents"] = {
+            "task": "audit.sync_unknown_torrents",
+            "schedule": crontab(hour=20, minute=0),
         }
-    else:
-        celery.conf.beat_schedule = {}
+    celery.conf.beat_schedule = beat
 
     return celery

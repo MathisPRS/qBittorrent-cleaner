@@ -206,8 +206,10 @@ class QbittorrentAdapter:
                 parsed = urlparse(url)
                 hostname = (parsed.hostname or "").lower()
 
-                if "tracker.torr9.xyz" in hostname:
+                if "torr9.xyz" in hostname or "torr9.net" in hostname:
                     return "torr9"
+                if "tr4ker.net" in hostname:
+                    return "tr4ker"
                 if "la-cale.space" in hostname or "tracker.la-cale.space" in hostname:
                     return "lacale"
                 if "p2p-world.net" in hostname:

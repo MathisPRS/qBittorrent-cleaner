@@ -30,6 +30,64 @@ class RadarrAdapter:
             self.logger.exception("[Radarr] GET failed: %s", url)
             return None
 
+    def _put(self, path: str, payload: dict) -> Any:
+        url = f"{self.base}{path}"
+        try:
+            resp = self.session.put(url, json=payload, timeout=self.timeout)
+            resp.raise_for_status()
+            return resp.json() if resp.text else True
+        except Exception:
+            self.logger.exception("[Radarr] PUT failed: %s", url)
+            return None
+
+    def _post(self, path: str, payload: dict) -> Any:
+        url = f"{self.base}{path}"
+        try:
+            resp = self.session.post(url, json=payload, timeout=self.timeout)
+            resp.raise_for_status()
+            return resp.json() if resp.text else True
+        except Exception:
+            self.logger.exception("[Radarr] POST failed: %s", url)
+            return None
+
+    # -----------------------------
+    # TAGS (write)
+    # -----------------------------
+
+    def get_or_create_tag(self, label: str) -> Optional[int]:
+        """Return the id of the Radarr tag `label`, creating it if needed."""
+        label = (label or "").lower()
+        for t in (self._get("/api/v3/tag") or []):
+            if (t.get("label") or "").lower() == label:
+                return t.get("id")
+        created = self._post("/api/v3/tag", {"label": label})
+        return created.get("id") if isinstance(created, dict) else None
+
+    def update_movie(self, movie: dict) -> bool:
+        """PUT a full movie resource back to Radarr (e.g. after mutating `tags`)."""
+        mid = movie.get("id")
+        return self._put(f"/api/v3/movie/{mid}", movie) is not None
+
+    def set_movie_tags(self, radarr_id, add=None, remove=None) -> bool:
+        """Add/remove tag *labels* on one movie (GET → mutate → PUT). Returns True if changed."""
+        add = add or []
+        remove = remove or []
+        movie = self.get_movie(int(radarr_id))
+        if not movie:
+            return False
+        tags = set(movie.get("tags") or [])
+        add_ids = {self.get_or_create_tag(l) for l in add}
+        add_ids = {i for i in add_ids if i is not None}
+        label2id = {(t.get("label") or "").lower(): t.get("id")
+                    for t in (self._get("/api/v3/tag") or [])}
+        remove_ids = {label2id.get((l or "").lower()) for l in remove}
+        remove_ids = {i for i in remove_ids if i is not None}
+        new_tags = (tags | add_ids) - remove_ids
+        if new_tags == tags:
+            return False
+        movie["tags"] = sorted(new_tags)
+        return self.update_movie(movie)
+
     # -----------------------------
     # MOVIES
     # -----------------------------
