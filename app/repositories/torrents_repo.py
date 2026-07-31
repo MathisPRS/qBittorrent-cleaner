@@ -85,7 +85,17 @@ class TorrentsRepo:
     def get_hashes_to_delete(self, parent_torrent_id: int) -> List[str]:
         parent_torrent = self.get_by_id(parent_torrent_id)
         hashes_to_delete = []
-        hashes_to_delete.append(parent_torrent.hash.strip().lower())
+        # Garde-fou : le torrent parent peut avoir déjà été supprimé de la BDD
+        # (référence orpheline). On continue quand même pour ramasser d'éventuels
+        # cross-seeds encore liés à cet id, au lieu de planter (AttributeError).
+        if parent_torrent is not None and parent_torrent.hash:
+            hashes_to_delete.append(parent_torrent.hash.strip().lower())
+        else:
+            self.logger.warning(
+                "[BBDD] get_hashes_to_delete: torrent parent id=%s introuvable "
+                "(déjà supprimé) — on continue avec ses cross-seeds éventuels",
+                parent_torrent_id,
+            )
         try:
             child_torrents = Torrents.query.filter_by(
                 cross_seed_id=parent_torrent_id
