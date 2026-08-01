@@ -126,7 +126,7 @@ class DeferredDeletionService:
 
         ready_to_delete: List[str] = []
         seen_hashes = set()
-        instant_delete_indexers = {"nyaa", "torr9", "tr4ker", "c411"}
+        instant_delete_indexers = {"nyaa"}
 
         for torrent_hash in candidate_hashes:
             normalized_hash = (torrent_hash or "").strip().lower()

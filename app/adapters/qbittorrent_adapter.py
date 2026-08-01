@@ -210,6 +210,8 @@ class QbittorrentAdapter:
                     return "torr9"
                 if "tr4ker.net" in hostname:
                     return "tr4ker"
+                if "yggreborn.org" in hostname:
+                    return "yggreborn"
                 if "la-cale.space" in hostname or "tracker.la-cale.space" in hostname:
                     return "lacale"
                 if "p2p-world.net" in hostname:
